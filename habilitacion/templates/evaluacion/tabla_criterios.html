@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:lista_estandares' %}">Estandares</a></li>
+<li class="breadcrumb-item active">{{ estandar.nombre }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tabla-criterios {
+        font-size: 0.9rem;
+    }
+    .tabla-criterios th {
+        background-color: #1e3a5f;
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    .tabla-criterios td {
+        vertical-align: middle;
+    }
+    .criterio-texto {
+        max-width: 400px;
+    }
+    .estado-select {
+        min-width: 120px;
+    }
+    .estado-C { background-color: #d1e7dd !important; }
+    .estado-NC { background-color: #f8d7da !important; }
+    .estado-NA { background-color: #e2e3e5 !important; }
+    .estado-P { background-color: #fff3cd !important; }
+    .guardando {
+        opacity: 0.6;
+    }
+    .guardado {
+        animation: flash-green 0.5s;
+    }
+    @keyframes flash-green {
+        0% { background-color: #d1e7dd; }
+        100% { background-color: transparent; }
+    }
+    .btn-archivo {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    .archivos-lista {
+        max-height: 100px;
+        overflow-y: auto;
+    }
+    .archivo-item {
+        font-size: 0.75rem;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+        background: #f8f9fa;
+        margin-bottom: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1">{{ estandar.codigo }} - {{ estandar.nombre }}</h4>
+        <p class="text-muted mb-0">{{ entidad.razon_social }}</p>
+    </div>
+    <div>
+        <a href="{% url 'evaluacion:lista_estandares' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-table"></i> Criterios de Evaluacion</span>
+        <span class="badge bg-secondary">{{ evaluaciones_data|length }} criterios</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover tabla-criterios mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">No.</th>
+                        <th class="criterio-texto">Criterio</th>
+                        <th style="width: 130px;">Estado</th>
+                        <th style="width: 80px;">En Proceso</th>
+                        <th style="width: 150px;">Responsable</th>
+                        <th style="width: 100px;">Archivos</th>
+                        <th style="width: 200px;">Comentarios</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in evaluaciones_data %}
+                    <tr id="fila-{{ item.evaluacion.id }}" class="{% if item.evaluacion.estado == 'C' %}estado-C{% elif item.evaluacion.estado == 'NC' %}estado-NC{% elif item.evaluacion.estado == 'NA' %}estado-NA{% else %}estado-P{% endif %}">
+                        <td>
+                            <strong>{{ item.criterio.numero }}</strong>
+                        </td>
+                        <td class="criterio-texto">
+                            <span data-bs-toggle="tooltip" title="{{ item.criterio.texto }}">
+                                {{ item.criterio.texto|truncatewords:30 }}
+                            </span>
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm estado-select"
+                                    data-evaluacion="{{ item.evaluacion.id }}"
+                                    data-campo="estado"
+                                    onchange="guardarCambio(this)">
+                                {% for valor, etiqueta in estados %}
+                                <option value="{{ valor }}" {% if item.evaluacion.estado == valor %}selected{% endif %}>
+                                    {{ etiqueta }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td class="text-center">
+                            <div class="form-check form-switch d-flex justify-content-center">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       data-evaluacion="{{ item.evaluacion.id }}"
+                                       data-campo="en_proceso"
+                                       {% if item.evaluacion.en_proceso %}checked{% endif %}
+                                       onchange="guardarCambio(this)">
+                            </div>
+                        </td>
+                        <td>
+                            <select class="form-select form-select-sm"
+                                    data-evaluacion="{{ item.evaluacion.id }}"
+                                    data-campo="responsable"
+                                    onchange="guardarCambio(this)">
+                                <option value="">-- Sin asignar --</option>
+                                {% for usuario in usuarios_entidad %}
+                                <option value="{{ usuario.id }}" {% if item.evaluacion.responsable_id == usuario.id %}selected{% endif %}>
+                                    {{ usuario.nombre_completo|default:usuario.email }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <div class="archivos-lista" id="archivos-{{ item.evaluacion.id }}">
+                                {% for archivo in item.archivos %}
+                                <div class="archivo-item d-flex justify-content-between align-items-center">
+                                    <a href="{{ archivo.archivo.url }}" target="_blank" class="text-truncate" style="max-width: 80px;">
+                                        {{ archivo.nombre }}
+                                    </a>
+                                    <button type="button" class="btn btn-link btn-sm text-danger p-0"
+                                            onclick="eliminarArchivo({{ archivo.id }}, {{ item.evaluacion.id }})">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                                {% empty %}
+                                <small class="text-muted">Sin archivos</small>
+                                {% endfor %}
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-archivo mt-1"
+                                    onclick="mostrarModalArchivo({{ item.evaluacion.id }})">
+                                <i class="bi bi-upload"></i>
+                            </button>
+                        </td>
+                        <td>
+                            <textarea class="form-control form-control-sm"
+                                      rows="2"
+                                      data-evaluacion="{{ item.evaluacion.id }}"
+                                      data-campo="comentarios"
+                                      onblur="guardarCambio(this)"
+                                      placeholder="Comentarios...">{{ item.evaluacion.comentarios }}</textarea>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para subir archivo -->
+<div class="modal fade" id="modalArchivo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Subir Archivo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formArchivo" enctype="multipart/form-data">
+                    <input type="hidden" id="archivoEvaluacionId" name="evaluacion_id">
+                    <div class="mb-3">
+                        <label class="form-label">Archivo</label>
+                        <input type="file" class="form-control" name="archivo" id="inputArchivo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre (opcional)</label>
+                        <input type="text" class="form-control" name="nombre" id="inputNombre" placeholder="Nombre del archivo">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripcion (opcional)</label>
+                        <textarea class="form-control" name="descripcion" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="subirArchivo()">
+                    <i class="bi bi-upload"></i> Subir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast de notificacion -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="toastGuardado" class="toast" role="alert">
+        <div class="toast-body d-flex align-items-center">
+            <i class="bi bi-check-circle text-success me-2"></i>
+            <span id="toastMensaje">Guardado correctamente</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Inicializar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (el) {
+        return new bootstrap.Tooltip(el)
+    });
+
+    const toast = new bootstrap.Toast(document.getElementById('toastGuardado'));
+    const modalArchivo = new bootstrap.Modal(document.getElementById('modalArchivo'));
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function guardarCambio(elemento) {
+        const evaluacionId = elemento.dataset.evaluacion;
+        const campo = elemento.dataset.campo;
+        let valor;
+
+        if (elemento.type === 'checkbox') {
+            valor = elemento.checked;
+        } else {
+            valor = elemento.value;
+        }
+
+        const fila = document.getElementById('fila-' + evaluacionId);
+        fila.classList.add('guardando');
+
+        fetch('{% url "evaluacion:api_guardar_criterio" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                evaluacion_id: evaluacionId,
+                campo: campo,
+                valor: valor
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            fila.classList.remove('guardando');
+            if (data.success) {
+                // Actualizar color de la fila si cambio el estado
+                if (campo === 'estado') {
+                    fila.className = '';
+                    fila.classList.add('estado-' + valor);
+                }
+                fila.classList.add('guardado');
+                setTimeout(() => fila.classList.remove('guardado'), 500);
+
+                document.getElementById('toastMensaje').textContent = 'Guardado correctamente';
+                toast.show();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            fila.classList.remove('guardando');
+            alert('Error de conexion');
+        });
+    }
+
+    function mostrarModalArchivo(evaluacionId) {
+        document.getElementById('archivoEvaluacionId').value = evaluacionId;
+        document.getElementById('formArchivo').reset();
+        modalArchivo.show();
+    }
+
+    function subirArchivo() {
+        const evaluacionId = document.getElementById('archivoEvaluacionId').value;
+        const form = document.getElementById('formArchivo');
+        const formData = new FormData(form);
+
+        fetch('{% url "evaluacion:api_subir_archivo" evaluacion_pk=0 %}'.replace('0', evaluacionId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                modalArchivo.hide();
+                // Agregar archivo a la lista
+                const listaArchivos = document.getElementById('archivos-' + evaluacionId);
+                const sinArchivos = listaArchivos.querySelector('.text-muted');
+                if (sinArchivos) sinArchivos.remove();
+
+                const nuevoArchivo = document.createElement('div');
+                nuevoArchivo.className = 'archivo-item d-flex justify-content-between align-items-center';
+                nuevoArchivo.innerHTML = `
+                    <a href="${data.archivo.url}" target="_blank" class="text-truncate" style="max-width: 80px;">
+                        ${data.archivo.nombre}
+                    </a>
+                    <button type="button" class="btn btn-link btn-sm text-danger p-0"
+                            onclick="eliminarArchivo(${data.archivo.id}, ${evaluacionId})">
+                        <i class="bi bi-x"></i>
+                    </button>
+                `;
+                listaArchivos.appendChild(nuevoArchivo);
+
+                document.getElementById('toastMensaje').textContent = 'Archivo subido correctamente';
+                toast.show();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error de conexion');
+        });
+    }
+
+    function eliminarArchivo(archivoId, evaluacionId) {
+        if (!confirm('Eliminar este archivo?')) return;
+
+        fetch('{% url "evaluacion:api_eliminar_archivo" archivo_pk=0 %}'.replace('0', archivoId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    }
+</script>
+{% endblock %}

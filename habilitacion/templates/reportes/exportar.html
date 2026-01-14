@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Exportar Reportes{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'reportes:dashboard' %}">Reportes</a></li>
+<li class="breadcrumb-item active">Exportar</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-0">
+            <i class="bi bi-download text-info"></i>
+            Exportar Reportes
+        </h4>
+        <p class="text-muted">Descargue informes en diferentes formatos</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-file-earmark-excel display-4 text-success mb-3"></i>
+                <h5>Exportar a Excel</h5>
+                <p class="text-muted small">Descargue el reporte completo en formato Excel</p>
+                <button class="btn btn-success" disabled>
+                    <i class="bi bi-download"></i> Descargar Excel
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <i class="bi bi-file-earmark-pdf display-4 text-danger mb-3"></i>
+                <h5>Exportar a PDF</h5>
+                <p class="text-muted small">Descargue el reporte completo en formato PDF</p>
+                <button class="btn btn-danger" disabled>
+                    <i class="bi bi-download"></i> Descargar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

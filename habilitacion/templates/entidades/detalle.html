@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ entidad.razon_social }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'entidades:lista' %}">Entidades</a></li>
+<li class="breadcrumb-item active">{{ entidad.razon_social }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0">
+                <i class="bi bi-building text-primary"></i>
+                {{ entidad.razon_social }}
+            </h4>
+            <p class="text-muted mb-0">NIT: {{ entidad.nit }}</p>
+        </div>
+        <div>
+            <a href="{% url 'entidades:editar' entidad.pk %}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Editar
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>Información General
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Tipo:</div>
+                    <div class="col-7">{{ entidad.tipo_prestador.nombre }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Código REPS:</div>
+                    <div class="col-7">{{ entidad.codigo_reps|default:"-" }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Email:</div>
+                    <div class="col-7">{{ entidad.email|default:"-" }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Teléfono:</div>
+                    <div class="col-7">{{ entidad.telefono|default:"-" }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Dirección:</div>
+                    <div class="col-7">{{ entidad.direccion|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 text-muted">Estado:</div>
+                    <div class="col-7">
+                        {% if entidad.activo %}
+                        <span class="badge bg-success">Activo</span>
+                        {% else %}
+                        <span class="badge bg-danger">Inactivo</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-person-badge me-2"></i>Representante Legal
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Nombre:</div>
+                    <div class="col-7">{{ entidad.representante_legal|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 text-muted">Cédula:</div>
+                    <div class="col-7">{{ entidad.cedula_representante|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-geo-alt me-2"></i>Sedes</span>
+                <a href="{% url 'entidades:crear_sede' entidad.pk %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nueva Sede
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Código REPS</th>
+                                <th>Municipio</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sede in entidad.sedes.all %}
+                            <tr>
+                                <td>{{ sede.nombre }}</td>
+                                <td><code>{{ sede.codigo_reps|default:"-" }}</code></td>
+                                <td>{{ sede.municipio.nombre|default:"-" }}</td>
+                                <td>
+                                    {% if sede.activo %}
+                                    <span class="badge bg-success">Activa</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Inactiva</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'entidades:detalle_sede' sede.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'entidades:editar_sede' sede.pk %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">No hay sedes registradas</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

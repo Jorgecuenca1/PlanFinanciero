@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial de Generación IA{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'documentos:lista' %}">Documentos</a></li>
+<li class="breadcrumb-item active">Historial IA</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-0">
+            <i class="bi bi-clock-history text-primary"></i>
+            Historial de Generación con IA
+        </h4>
+        <p class="text-muted">Registro de todas las solicitudes de generación de documentos</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th>Tokens</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for solicitud in solicitudes %}
+                    <tr>
+                        <td>{{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</td>
+                        <td>{{ solicitud.usuario.nombre_completo }}</td>
+                        <td>{{ solicitud.tipo_documento }}</td>
+                        <td>
+                            {% if solicitud.estado == 'completado' %}
+                            <span class="badge bg-success">Completado</span>
+                            {% elif solicitud.estado == 'pendiente' %}
+                            <span class="badge bg-warning">Pendiente</span>
+                            {% else %}
+                            <span class="badge bg-danger">Error</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ solicitud.tokens_usados|default:"-" }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="verResultado({{ solicitud.pk }})">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No hay solicitudes registradas</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

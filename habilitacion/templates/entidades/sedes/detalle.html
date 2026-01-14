@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ sede.nombre }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'entidades:lista' %}">Entidades</a></li>
+<li class="breadcrumb-item"><a href="{% url 'entidades:detalle' sede.entidad.pk %}">{{ sede.entidad.razon_social }}</a></li>
+<li class="breadcrumb-item active">{{ sede.nombre }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0">
+                <i class="bi bi-geo-alt text-primary"></i>
+                {{ sede.nombre }}
+            </h4>
+            <p class="text-muted mb-0">{{ sede.entidad.razon_social }}</p>
+        </div>
+        <div>
+            <a href="{% url 'entidades:editar_sede' sede.pk %}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Editar
+            </a>
+            <a href="{% url 'evaluacion:sede' sede.pk %}" class="btn btn-success">
+                <i class="bi bi-clipboard-check"></i> Evaluar
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>Información de la Sede
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Código REPS:</div>
+                    <div class="col-7"><code>{{ sede.codigo_reps|default:"-" }}</code></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Dirección:</div>
+                    <div class="col-7">{{ sede.direccion|default:"-" }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Municipio:</div>
+                    <div class="col-7">{{ sede.municipio.nombre|default:"-" }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Departamento:</div>
+                    <div class="col-7">{{ sede.municipio.departamento.nombre|default:"-" }}</div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-5 text-muted">Teléfono:</div>
+                    <div class="col-7">{{ sede.telefono|default:"-" }}</div>
+                </div>
+                <div class="row">
+                    <div class="col-5 text-muted">Estado:</div>
+                    <div class="col-7">
+                        {% if sede.activo %}
+                        <span class="badge bg-success">Activa</span>
+                        {% else %}
+                        <span class="badge bg-danger">Inactiva</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-graph-up me-2"></i>Resumen de Evaluación
+            </div>
+            <div class="card-body">
+                <div class="text-center py-3">
+                    <p class="text-muted">Progreso de habilitación</p>
+                    <h2 class="text-primary">{{ porcentaje_cumplimiento|default:0 }}%</h2>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar" role="progressbar" style="width: {{ porcentaje_cumplimiento|default:0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-clipboard-check me-2"></i>Servicios Habilitados</span>
+        <a href="{% url 'entidades:servicios' sede.pk %}" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus-circle"></i> Agregar Servicio
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Servicio</th>
+                        <th>Código</th>
+                        <th>Estado</th>
+                        <th>Cumplimiento</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for servicio in sede.servicios_habilitados.all %}
+                    <tr>
+                        <td>{{ servicio.servicio.nombre }}</td>
+                        <td><code>{{ servicio.servicio.codigo }}</code></td>
+                        <td>
+                            {% if servicio.habilitado %}
+                            <span class="badge bg-success">Habilitado</span>
+                            {% else %}
+                            <span class="badge bg-warning">En Proceso</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ servicio.porcentaje_cumplimiento|default:0 }}%</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">No hay servicios habilitados</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

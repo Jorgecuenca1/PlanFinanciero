@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Programas PAMEC{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'pamec:dashboard' %}">PAMEC</a></li>
+<li class="breadcrumb-item active">Programas</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0">
+                <i class="bi bi-diagram-3 text-primary"></i>
+                Programas de Mejoramiento
+            </h4>
+            <p class="text-muted mb-0">Gestión de programas PAMEC</p>
+        </div>
+        <button class="btn btn-primary" disabled>
+            <i class="bi bi-plus-circle"></i> Nuevo Programa
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Entidad</th>
+                        <th>Período</th>
+                        <th>Estado</th>
+                        <th>Avance</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for programa in programas %}
+                    <tr>
+                        <td>{{ programa.nombre }}</td>
+                        <td>{{ programa.entidad.razon_social }}</td>
+                        <td>{{ programa.anio }}</td>
+                        <td>
+                            {% if programa.estado == 'activo' %}
+                            <span class="badge bg-success">Activo</span>
+                            {% elif programa.estado == 'finalizado' %}
+                            <span class="badge bg-primary">Finalizado</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Borrador</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="progress" style="width: 100px; height: 20px;">
+                                <div class="progress-bar" style="width: {{ programa.porcentaje_avance }}%">
+                                    {{ programa.porcentaje_avance }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <a href="{% url 'pamec:detalle_programa' programa.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-gear display-4 d-block mb-3"></i>
+                            Módulo PAMEC en desarrollo
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

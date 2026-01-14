@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte por Estándar{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'reportes:dashboard' %}">Reportes</a></li>
+<li class="breadcrumb-item active">Por Estándar</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-0">
+            <i class="bi bi-bar-chart text-primary"></i>
+            Reporte por Estándar
+        </h4>
+        <p class="text-muted">Análisis detallado del cumplimiento por cada estándar</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <p class="text-muted text-center py-4">
+            Seleccione una sede y un período para generar el reporte detallado.
+        </p>
+    </div>
+</div>
+{% endblock %}

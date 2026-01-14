@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Plantillas de Prompts{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'documentos:lista' %}">Documentos</a></li>
+<li class="breadcrumb-item active">Prompts</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-0">
+            <i class="bi bi-chat-square-text text-primary"></i>
+            Plantillas de Prompts
+        </h4>
+        <p class="text-muted">Gestione las plantillas para generación de documentos con IA</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if prompts %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Tipo</th>
+                        <th>Global</th>
+                        <th>Activo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prompt in prompts %}
+                    <tr>
+                        <td>{{ prompt.nombre }}</td>
+                        <td>{{ prompt.get_tipo_display }}</td>
+                        <td>{% if prompt.es_global %}<i class="bi bi-check text-success"></i>{% else %}<i class="bi bi-x text-muted"></i>{% endif %}</td>
+                        <td>{% if prompt.activo %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-secondary">Inactivo</span>{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-4">No hay plantillas de prompts configuradas.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

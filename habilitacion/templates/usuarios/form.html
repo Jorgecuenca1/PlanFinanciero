@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if usuario %}Editar{% else %}Nuevo{% endif %} Usuario{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'usuarios:lista' %}">Usuarios</a></li>
+<li class="breadcrumb-item active">{% if usuario %}Editar{% else %}Nuevo{% endif %}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-0">
+            <i class="bi bi-person-plus text-primary"></i>
+            {% if usuario %}Editar Usuario{% else %}Nuevo Usuario{% endif %}
+        </h4>
+        <p class="text-muted">{% if usuario %}Modifique{% else %}Registre{% endif %} los datos del usuario</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Nombres *</label>
+                    <input type="text" name="first_name" class="form-control" value="{{ usuario.first_name|default:'' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Apellidos *</label>
+                    <input type="text" name="last_name" class="form-control" value="{{ usuario.last_name|default:'' }}" required>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Email *</label>
+                    <input type="email" name="email" class="form-control" value="{{ usuario.email|default:'' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Documento de Identidad</label>
+                    <input type="text" name="documento_identidad" class="form-control" value="{{ usuario.documento_identidad|default:'' }}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Teléfono</label>
+                    <input type="text" name="telefono" class="form-control" value="{{ usuario.telefono|default:'' }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Cargo</label>
+                    <input type="text" name="cargo" class="form-control" value="{{ usuario.cargo|default:'' }}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Rol *</label>
+                    <select name="rol" class="form-select" required>
+                        <option value="">Seleccione...</option>
+                        <option value="SUPER" {% if usuario.rol == 'SUPER' %}selected{% endif %}>Super Administrador</option>
+                        <option value="ADMIN" {% if usuario.rol == 'ADMIN' %}selected{% endif %}>Administrador</option>
+                        <option value="CALIDAD" {% if usuario.rol == 'CALIDAD' %}selected{% endif %}>Gestión de Calidad</option>
+                        <option value="EVALUADOR" {% if usuario.rol == 'EVALUADOR' %}selected{% endif %}>Evaluador</option>
+                        <option value="APROBADOR" {% if usuario.rol == 'APROBADOR' %}selected{% endif %}>Aprobador</option>
+                        <option value="CONSULTOR" {% if usuario.rol == 'CONSULTOR' %}selected{% endif %}>Consultor</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Entidad</label>
+                    <select name="entidad" class="form-select">
+                        <option value="">Sin asignar</option>
+                        {% for entidad in entidades %}
+                        <option value="{{ entidad.id }}" {% if usuario.entidad_id == entidad.id %}selected{% endif %}>{{ entidad.razon_social }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% if not usuario %}
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Contraseña *</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Confirmar Contraseña *</label>
+                    <input type="password" name="password_confirm" class="form-control" required>
+                </div>
+            </div>
+            {% endif %}
+            <div class="mb-3 form-check">
+                <input type="checkbox" name="is_active" class="form-check-input" id="is_active" {% if usuario.is_active %}checked{% endif %} {% if not usuario %}checked{% endif %}>
+                <label class="form-check-label" for="is_active">Usuario activo</label>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg me-1"></i>Guardar
+            </button>
+            <a href="{% url 'usuarios:lista' %}" class="btn btn-outline-secondary">
+                Cancelar
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

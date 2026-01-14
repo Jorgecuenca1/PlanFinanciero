@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}PQRS{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'siau:dashboard' %}">SIAU</a></li>
+<li class="breadcrumb-item active">PQRS</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h4 class="mb-0">
+                <i class="bi bi-envelope text-primary"></i>
+                Peticiones, Quejas, Reclamos y Sugerencias
+            </h4>
+            <p class="text-muted mb-0">Gestión de PQRS</p>
+        </div>
+        <button class="btn btn-primary" disabled>
+            <i class="bi bi-plus-circle"></i> Nueva PQRS
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Radicado</th>
+                        <th>Tipo</th>
+                        <th>Asunto</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pqrs in listado_pqrs %}
+                    <tr>
+                        <td><code>{{ pqrs.radicado }}</code></td>
+                        <td>{{ pqrs.get_tipo_display }}</td>
+                        <td>{{ pqrs.asunto|truncatewords:10 }}</td>
+                        <td>{{ pqrs.fecha_radicacion|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if pqrs.estado == 'resuelto' %}
+                            <span class="badge bg-success">Resuelto</span>
+                            {% elif pqrs.estado == 'en_proceso' %}
+                            <span class="badge bg-warning text-dark">En Proceso</span>
+                            {% else %}
+                            <span class="badge bg-danger">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'siau:detalle_pqrs' pqrs.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-gear display-4 d-block mb-3"></i>
+                            Módulo SIAU en desarrollo
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

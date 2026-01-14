@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Resultado IA{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'documentos:lista' %}">Documentos</a></li>
+<li class="breadcrumb-item active">Resultado IA</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-0">
+            <i class="bi bi-robot text-success"></i>
+            Documento Generado por IA
+        </h4>
+        <p class="text-muted">Revise el contenido generado y realice los ajustes necesarios</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-file-text me-2"></i>Contenido Generado</span>
+        <div>
+            <button class="btn btn-sm btn-outline-primary" onclick="copyToClipboard()">
+                <i class="bi bi-clipboard"></i> Copiar
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="contenido-generado" class="p-3 bg-light border rounded" style="white-space: pre-wrap;">{{ resultado }}</div>
+    </div>
+    <div class="card-footer">
+        <a href="{% url 'documentos:generar_ia' %}" class="btn btn-primary">
+            <i class="bi bi-arrow-repeat me-1"></i>Generar Nuevo
+        </a>
+        <a href="{% url 'documentos:lista' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<script>
+function copyToClipboard() {
+    const texto = document.getElementById('contenido-generado').innerText;
+    navigator.clipboard.writeText(texto).then(function() {
+        alert('Contenido copiado al portapapeles');
+    });
+}
+</script>
+{% endblock %}

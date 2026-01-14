@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte de Cumplimiento{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'reportes:dashboard' %}">Reportes</a></li>
+<li class="breadcrumb-item active">Cumplimiento</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-0">
+            <i class="bi bi-pie-chart text-success"></i>
+            Reporte de Cumplimiento General
+        </h4>
+        <p class="text-muted">Resumen del estado de cumplimiento de estándares de habilitación</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h2 class="text-success">{{ porcentaje_cumplimiento|default:0 }}%</h2>
+                <p class="text-muted mb-0">Cumplimiento General</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h2 class="text-success">{{ total_cumple|default:0 }}</h2>
+                <p class="text-muted mb-0">Criterios que Cumplen</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h2 class="text-danger">{{ total_no_cumple|default:0 }}</h2>
+                <p class="text-muted mb-0">No Cumplen</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h2 class="text-warning">{{ total_pendientes|default:0 }}</h2>
+                <p class="text-muted mb-0">Pendientes</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-bar-chart me-2"></i>Cumplimiento por Grupo
+    </div>
+    <div class="card-body">
+        {% if grupos_cumplimiento %}
+        {% for grupo in grupos_cumplimiento %}
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <span>{{ grupo.nombre }}</span>
+                <span>{{ grupo.porcentaje }}%</span>
+            </div>
+            <div class="progress" style="height: 20px;">
+                <div class="progress-bar bg-success" style="width: {{ grupo.porcentaje }}%"></div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-muted text-center">No hay datos de cumplimiento disponibles.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

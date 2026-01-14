@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load evaluacion_tags %}
+
+{% block title %}Evaluar {{ estandar.nombre }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:lista' %}">Evaluacion</a></li>
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:evaluacion_sede' sede.pk %}">{{ sede.nombre }}</a></li>
+<li class="breadcrumb-item active">{{ estandar.codigo }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-0">
+            <i class="bi bi-pencil-square text-primary"></i>
+            {{ estandar.codigo }} - {{ estandar.nombre }}
+        </h4>
+        <p class="text-muted">{{ estandar.grupo.nombre }} - {{ sede.nombre }}</p>
+    </div>
+</div>
+
+{% if messages %}
+<div class="row mb-3">
+    <div class="col-12">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-list-check me-2"></i>Criterios a Evaluar</span>
+            <span class="badge bg-primary">{{ criterios|length }} criterios</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 80px;">No.</th>
+                            <th>Descripcion del Criterio</th>
+                            <th style="width: 180px;">Estado Criterio</th>
+                            <th style="width: 120px;">Documento</th>
+                            <th style="width: 100px;">Accion</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for criterio in criterios %}
+                        {% with eval=evaluaciones|get_item:criterio.id %}
+                        <tr>
+                            <td><code>{{ criterio.numero }}</code></td>
+                            <td>
+                                <p class="mb-1">{{ criterio.texto|truncatewords:40 }}</p>
+                                {% if criterio.complejidad_aplica %}
+                                <small class="text-muted">Complejidad: {{ criterio.complejidad_aplica }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <select name="estado_{{ criterio.id }}" class="form-select form-select-sm">
+                                    <option value="PE" {% if eval.estado == 'PE' or not eval %}selected{% endif %}>Pendiente</option>
+                                    <option value="C" {% if eval.estado == 'C' %}selected{% endif %}>Cumple</option>
+                                    <option value="NC" {% if eval.estado == 'NC' %}selected{% endif %}>No Cumple</option>
+                                    <option value="NA" {% if eval.estado == 'NA' %}selected{% endif %}>No Aplica</option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                {% if eval %}
+                                    {% if eval.estado_documento == 'AP' %}
+                                    <span class="badge bg-success">Aprobado</span>
+                                    {% elif eval.estado_documento == 'ED' %}
+                                    <span class="badge bg-info">En Desarrollo</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">No Trabajado</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="badge bg-secondary">No Trabajado</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'evaluacion:evaluar_criterio' sede.pk criterio.pk %}"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="Editar documento y detalles">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">No hay criterios para evaluar</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg me-1"></i>Guardar Evaluacion Rapida
+            </button>
+            <a href="{% url 'evaluacion:evaluacion_sede' sede.pk %}" class="btn btn-outline-secondary">
+                Cancelar
+            </a>
+        </div>
+    </div>
+</form>
+
+<div class="alert alert-info mt-3">
+    <i class="bi bi-info-circle me-2"></i>
+    <strong>Nota:</strong> Esta vista permite una evaluacion rapida de estados (C/NC/NA).
+    Para editar documentos, asignar responsables y gestionar el flujo de aprobacion,
+    haga clic en el boton de edicion de cada criterio.
+</div>
+{% endblock %}

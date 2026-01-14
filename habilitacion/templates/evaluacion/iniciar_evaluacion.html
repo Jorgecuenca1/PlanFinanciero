@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Iniciar Evaluacion - {{ sede.nombre }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:lista' %}">Evaluacion</a></li>
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:evaluacion_sede' sede.pk %}">{{ sede.nombre }}</a></li>
+<li class="breadcrumb-item active">Iniciar</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-0">
+            <i class="bi bi-play-circle text-primary"></i>
+            Iniciar Evaluacion
+        </h4>
+        <p class="text-muted">{{ sede.nombre }} - {{ sede.entidad.razon_social }}</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header bg-primary text-white text-center">
+                <i class="bi bi-clipboard-check me-2"></i>Crear Evaluaciones
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-4">
+                    <i class="bi bi-files display-1 text-primary"></i>
+                </div>
+
+                <p class="lead">
+                    Este proceso creara registros de evaluacion para todos los criterios
+                    de la Resolucion 3100 de 2019.
+                </p>
+
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <div class="border rounded p-3">
+                            <h3 class="text-primary mb-0">{{ total_criterios }}</h3>
+                            <small class="text-muted">Criterios Totales</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-3">
+                            <h3 class="text-success mb-0">{{ evaluaciones_existentes }}</h3>
+                            <small class="text-muted">Ya Creadas</small>
+                        </div>
+                    </div>
+                </div>
+
+                {% if evaluaciones_existentes >= total_criterios %}
+                <div class="alert alert-success">
+                    <i class="bi bi-check-circle me-2"></i>
+                    Ya se han creado evaluaciones para todos los criterios.
+                </div>
+                <a href="{% url 'evaluacion:evaluacion_sede' sede.pk %}" class="btn btn-primary">
+                    <i class="bi bi-arrow-right me-1"></i>Ir a Evaluar
+                </a>
+                {% else %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Se crearan <strong>{{ total_criterios|add:evaluaciones_existentes|add:0 }}</strong>
+                        nuevos registros de evaluacion con estado "Pendiente".
+                    </div>
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-play-fill me-1"></i>Iniciar Evaluacion
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6 offset-md-3 text-center">
+        <a href="{% url 'evaluacion:evaluacion_sede' sede.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'entidades:lista' %}">Entidades</a></li>
+<li class="breadcrumb-item active">Crear Entidad con Usuario</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-building-add"></i> {{ titulo }}
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Al crear la entidad, se generara automaticamente un usuario con el email como nombre de usuario
+                    y una contrasena aleatoria. Asegurese de guardar las credenciales.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <h5 class="border-bottom pb-2 mb-3">Informacion Basica</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tipo de Prestador *</label>
+                            <select name="tipo_prestador" class="form-select" required>
+                                <option value="">Seleccione...</option>
+                                {% for tipo in tipos_prestador %}
+                                <option value="{{ tipo.id }}">{{ tipo.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Razon Social *</label>
+                            <input type="text" name="razon_social" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre Comercial</label>
+                            <input type="text" name="nombre_comercial" class="form-control">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">NIT *</label>
+                            <input type="text" name="nit" class="form-control" required>
+                        </div>
+                        <div class="col-md-2 mb-3">
+                            <label class="form-label">DV *</label>
+                            <input type="text" name="digito_verificacion" class="form-control" maxlength="1" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Codigo REPS</label>
+                            <input type="text" name="codigo_reps" class="form-control">
+                        </div>
+                    </div>
+
+                    <h5 class="border-bottom pb-2 mb-3 mt-4">Representante Legal</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre Representante Legal *</label>
+                            <input type="text" name="representante_legal" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Documento Representante *</label>
+                            <input type="text" name="documento_representante" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <h5 class="border-bottom pb-2 mb-3 mt-4">Ubicacion</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Departamento *</label>
+                            <select name="departamento" id="departamento" class="form-select" required>
+                                <option value="">Seleccione...</option>
+                                {% for depto in departamentos %}
+                                <option value="{{ depto.id }}">{{ depto.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Municipio *</label>
+                            <select name="municipio" id="municipio" class="form-select" required>
+                                <option value="">Seleccione departamento primero</option>
+                                {% for mun in municipios %}
+                                <option value="{{ mun.id }}" data-depto="{{ mun.departamento_id }}">{{ mun.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Direccion *</label>
+                            <input type="text" name="direccion" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <h5 class="border-bottom pb-2 mb-3 mt-4">Contacto</h5>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Telefono *</label>
+                            <input type="text" name="telefono" class="form-control" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Email * <small class="text-muted">(sera el usuario)</small></label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Sitio Web</label>
+                            <input type="url" name="sitio_web" class="form-control">
+                        </div>
+                    </div>
+
+                    <h5 class="border-bottom pb-2 mb-3 mt-4">Responsables</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Gerente/Director</label>
+                            <input type="text" name="gerente" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Responsable de Calidad</label>
+                            <input type="text" name="responsable_calidad" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="{% url 'entidades:lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Crear Entidad y Usuario
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Filtrar municipios por departamento
+    document.getElementById('departamento').addEventListener('change', function() {
+        const deptoId = this.value;
+        const municipioSelect = document.getElementById('municipio');
+        const options = municipioSelect.querySelectorAll('option[data-depto]');
+
+        options.forEach(option => {
+            if (deptoId === '' || option.dataset.depto === deptoId) {
+                option.style.display = '';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+
+        municipioSelect.value = '';
+    });
+</script>
+{% endblock %}

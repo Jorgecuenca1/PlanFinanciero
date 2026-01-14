@@ -1,0 +1,461 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Evaluar Criterio {{ criterio.numero }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .estado-selector .btn {
+        border-radius: 0;
+    }
+    .estado-selector .btn:first-child {
+        border-radius: 0.25rem 0 0 0.25rem;
+    }
+    .estado-selector .btn:last-child {
+        border-radius: 0 0.25rem 0.25rem 0;
+    }
+    .estado-selector input[type="radio"]:checked + label.btn-cumple {
+        background-color: #198754;
+        border-color: #198754;
+        color: white;
+    }
+    .estado-selector input[type="radio"]:checked + label.btn-no-cumple {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+    .estado-selector input[type="radio"]:checked + label.btn-no-aplica {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+    }
+    .editor-container {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        min-height: 300px;
+    }
+    .editor-toolbar {
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        padding: 8px;
+    }
+    #contenido_documento {
+        min-height: 250px;
+        padding: 15px;
+    }
+    .bloqueado-overlay {
+        position: relative;
+    }
+    .bloqueado-overlay::after {
+        content: "DOCUMENTO APROBADO - Solo lectura";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        font-weight: bold;
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:lista' %}">Evaluacion</a></li>
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:evaluacion_sede' sede.pk %}">{{ sede.nombre }}</a></li>
+<li class="breadcrumb-item active">Criterio {{ criterio.numero }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-1">
+            <i class="bi bi-check2-square text-primary"></i>
+            Evaluar Criterio {{ criterio.numero }}
+        </h4>
+        <p class="text-muted mb-0">{{ sede.nombre }} - {{ sede.entidad.razon_social }}</p>
+    </div>
+</div>
+
+{% if messages %}
+<div class="row mb-3">
+    <div class="col-12">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if bloqueado %}
+<div class="alert alert-warning">
+    <i class="bi bi-lock-fill me-2"></i>
+    <strong>Documento Aprobado:</strong> Este criterio ya fue aprobado y no puede modificarse. Solo un administrador puede desbloquearlo.
+</div>
+{% endif %}
+
+<form method="post" id="formEvaluacion">
+    {% csrf_token %}
+
+    <div class="row">
+        <!-- Panel Izquierdo: Criterio y Estados -->
+        <div class="col-lg-4">
+            <!-- Texto del Criterio -->
+            <div class="card mb-3">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-file-text me-2"></i>Criterio {{ criterio.numero }}
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ criterio.texto }}</p>
+                    {% if criterio.observaciones %}
+                    <hr>
+                    <small class="text-muted">{{ criterio.observaciones }}</small>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Estado del Criterio: C, NC, NA -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <i class="bi bi-check-circle me-2"></i>Estado del Criterio
+                </div>
+                <div class="card-body">
+                    <div class="btn-group estado-selector w-100" role="group">
+                        <input type="radio" class="btn-check" name="estado" id="estado_c" value="C"
+                               {% if evaluacion.estado == 'C' %}checked{% endif %} {% if bloqueado %}disabled{% endif %}>
+                        <label class="btn btn-outline-success btn-cumple" for="estado_c">
+                            <i class="bi bi-check-lg"></i> Cumple
+                        </label>
+
+                        <input type="radio" class="btn-check" name="estado" id="estado_nc" value="NC"
+                               {% if evaluacion.estado == 'NC' %}checked{% endif %} {% if bloqueado %}disabled{% endif %}>
+                        <label class="btn btn-outline-danger btn-no-cumple" for="estado_nc">
+                            <i class="bi bi-x-lg"></i> No Cumple
+                        </label>
+
+                        <input type="radio" class="btn-check" name="estado" id="estado_na" value="NA"
+                               {% if evaluacion.estado == 'NA' %}checked{% endif %} {% if bloqueado %}disabled{% endif %}>
+                        <label class="btn btn-outline-secondary btn-no-aplica" for="estado_na">
+                            <i class="bi bi-dash-lg"></i> N/A
+                        </label>
+                    </div>
+
+                    <!-- Justificacion para NA -->
+                    <div class="mt-3" id="justificacion_container" style="display: {% if evaluacion.estado == 'NA' %}block{% else %}none{% endif %};">
+                        <label class="form-label">Justificacion No Aplica *</label>
+                        <textarea name="justificacion_na" class="form-control" rows="2" {% if bloqueado %}readonly{% endif %}>{{ evaluacion.justificacion_na|default:'' }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estado del Documento: NT, ED, AP -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <i class="bi bi-file-earmark me-2"></i>Estado del Documento
+                </div>
+                <div class="card-body">
+                    <select name="estado_documento" class="form-select" {% if bloqueado %}disabled{% endif %}>
+                        <option value="NT" {% if evaluacion.estado_documento == 'NT' %}selected{% endif %}>
+                            No Trabajado
+                        </option>
+                        <option value="ED" {% if evaluacion.estado_documento == 'ED' %}selected{% endif %}>
+                            En Desarrollo
+                        </option>
+                        <option value="AP" {% if evaluacion.estado_documento == 'AP' %}selected{% endif %}>
+                            Aprobado
+                        </option>
+                    </select>
+                    <small class="text-muted d-block mt-2">
+                        <i class="bi bi-info-circle"></i>
+                        Una vez aprobado, solo un administrador puede modificar este criterio.
+                    </small>
+                </div>
+            </div>
+
+            <!-- Responsables -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <i class="bi bi-people me-2"></i>Responsables
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <label class="form-label small text-muted">Desarrollo</label>
+                        <select name="responsable_desarrollo" class="form-select form-select-sm" {% if bloqueado %}disabled{% endif %}>
+                            <option value="">Sin asignar</option>
+                            {% for u in usuarios %}
+                            <option value="{{ u.id }}" {% if evaluacion.responsable_desarrollo_id == u.id %}selected{% endif %}>
+                                {{ u.nombre_completo|default:u.email }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small text-muted">Calidad</label>
+                        <select name="responsable_calidad" class="form-select form-select-sm" {% if bloqueado %}disabled{% endif %}>
+                            <option value="">Sin asignar</option>
+                            {% for u in usuarios %}
+                            <option value="{{ u.id }}" {% if evaluacion.responsable_calidad_id == u.id %}selected{% endif %}>
+                                {{ u.nombre_completo|default:u.email }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small text-muted">Aprobacion</label>
+                        <select name="responsable_aprobacion" class="form-select form-select-sm" {% if bloqueado %}disabled{% endif %}>
+                            <option value="">Sin asignar</option>
+                            {% for u in usuarios %}
+                            <option value="{{ u.id }}" {% if evaluacion.responsable_aprobacion_id == u.id %}selected{% endif %}>
+                                {{ u.nombre_completo|default:u.email }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fechas -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <i class="bi bi-calendar me-2"></i>Fechas
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <label class="form-label small text-muted">Fecha de Vencimiento</label>
+                        <input type="date" name="fecha_vencimiento" class="form-control form-control-sm"
+                               value="{{ evaluacion.fecha_vencimiento|date:'Y-m-d'|default:'' }}"
+                               {% if bloqueado %}disabled{% endif %}>
+                    </div>
+                    {% if evaluacion.fecha_evaluacion %}
+                    <div class="mb-2">
+                        <label class="form-label small text-muted">Ultima Evaluacion</label>
+                        <p class="mb-0 small">{{ evaluacion.fecha_evaluacion|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    {% endif %}
+                    {% if evaluacion.fecha_aprobacion %}
+                    <div class="mb-2">
+                        <label class="form-label small text-muted">Fecha de Aprobacion</label>
+                        <p class="mb-0 small">{{ evaluacion.fecha_aprobacion|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Derecho: Editor de Documento -->
+        <div class="col-lg-8">
+            <div class="card {% if bloqueado %}bloqueado-overlay{% endif %}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-pencil-square me-2"></i>Documento de Soporte</span>
+                    {% if not bloqueado %}
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalIA">
+                        <i class="bi bi-robot me-1"></i>Generar con IA
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="card-body p-0">
+                    <div class="editor-container">
+                        <div class="editor-toolbar">
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-secondary" onclick="formatDoc('bold')">
+                                    <i class="bi bi-type-bold"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="formatDoc('italic')">
+                                    <i class="bi bi-type-italic"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="formatDoc('underline')">
+                                    <i class="bi bi-type-underline"></i>
+                                </button>
+                            </div>
+                            <div class="btn-group btn-group-sm ms-2">
+                                <button type="button" class="btn btn-outline-secondary" onclick="formatDoc('insertUnorderedList')">
+                                    <i class="bi bi-list-ul"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" onclick="formatDoc('insertOrderedList')">
+                                    <i class="bi bi-list-ol"></i>
+                                </button>
+                            </div>
+                            {% if plantilla %}
+                            <button type="button" class="btn btn-sm btn-outline-info ms-2" onclick="cargarPlantilla()">
+                                <i class="bi bi-file-earmark-text me-1"></i>Usar Plantilla
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div id="contenido_documento" contenteditable="{% if not bloqueado %}true{% else %}false{% endif %}">
+                            {{ documento.contenido_html|default:''|safe }}
+                        </div>
+                    </div>
+                    <input type="hidden" name="contenido_documento" id="contenido_documento_hidden">
+                </div>
+            </div>
+
+            <!-- Comentarios -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <i class="bi bi-chat-text me-2"></i>Comentarios
+                </div>
+                <div class="card-body">
+                    <textarea name="comentarios" class="form-control" rows="2"
+                              placeholder="Observaciones adicionales..."
+                              {% if bloqueado %}readonly{% endif %}>{{ evaluacion.comentarios|default:'' }}</textarea>
+                </div>
+            </div>
+
+            <!-- Historial reciente -->
+            {% if historial %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <i class="bi bi-clock-history me-2"></i>Historial Reciente
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for h in historial %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                            <small>
+                                <strong>{{ h.usuario.nombre_completo|default:h.usuario.email }}</strong>:
+                                {{ h.descripcion }}
+                            </small>
+                            <small class="text-muted">{{ h.fecha|date:"d/m H:i" }}</small>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Botones de Accion -->
+    <div class="row mt-4">
+        <div class="col-12 d-flex justify-content-between">
+            <a href="{% url 'evaluacion:evaluacion_sede' sede.pk %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Volver
+            </a>
+            <div>
+                {% if not bloqueado %}
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>Guardar
+                </button>
+                <button type="submit" name="siguiente" value="1" class="btn btn-success">
+                    <i class="bi bi-check-lg me-1"></i>Guardar y Siguiente
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Modal para IA -->
+<div class="modal fade" id="modalIA" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-robot me-2"></i>Generar Documento con IA
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Describe que tipo de documento necesitas para demostrar el cumplimiento de este criterio.</p>
+                <textarea id="promptIA" class="form-control" rows="3" placeholder="Ej: Genera un procedimiento para..."></textarea>
+                <div id="iaLoading" class="text-center mt-3" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Generando...</span>
+                    </div>
+                    <p class="mt-2">Generando documento...</p>
+                </div>
+                <div id="iaError" class="alert alert-danger mt-3" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="generarConIA()">
+                    <i class="bi bi-magic me-1"></i>Generar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if plantilla %}
+<script id="plantilla-contenido" type="text/html">
+{{ plantilla.contenido_html|safe }}
+</script>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Copiar contenido del editor al campo oculto antes de enviar
+    document.getElementById('formEvaluacion').addEventListener('submit', function(e) {
+        document.getElementById('contenido_documento_hidden').value =
+            document.getElementById('contenido_documento').innerHTML;
+    });
+
+    // Mostrar/ocultar justificacion NA
+    document.querySelectorAll('input[name="estado"]').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            var container = document.getElementById('justificacion_container');
+            container.style.display = this.value === 'NA' ? 'block' : 'none';
+        });
+    });
+
+    // Funciones del editor
+    function formatDoc(cmd, value) {
+        document.execCommand(cmd, false, value);
+    }
+
+    function cargarPlantilla() {
+        if (confirm('Se reemplazara el contenido actual con la plantilla. Continuar?')) {
+            var plantilla = document.getElementById('plantilla-contenido');
+            if (plantilla) {
+                document.getElementById('contenido_documento').innerHTML = plantilla.innerHTML;
+            }
+        }
+    }
+
+    // Generar con IA
+    function generarConIA() {
+        var prompt = document.getElementById('promptIA').value;
+        if (!prompt) {
+            alert('Por favor, describe que documento necesitas.');
+            return;
+        }
+
+        document.getElementById('iaLoading').style.display = 'block';
+        document.getElementById('iaError').style.display = 'none';
+
+        fetch('{% url "evaluacion:generar_ia" evaluacion.pk %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: 'prompt=' + encodeURIComponent(prompt)
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('iaLoading').style.display = 'none';
+
+            if (data.error) {
+                document.getElementById('iaError').textContent = data.error;
+                document.getElementById('iaError').style.display = 'block';
+            } else {
+                document.getElementById('contenido_documento').innerHTML = data.contenido;
+                bootstrap.Modal.getInstance(document.getElementById('modalIA')).hide();
+            }
+        })
+        .catch(error => {
+            document.getElementById('iaLoading').style.display = 'none';
+            document.getElementById('iaError').textContent = 'Error de conexion: ' + error;
+            document.getElementById('iaError').style.display = 'block';
+        });
+    }
+</script>
+{% endblock %}

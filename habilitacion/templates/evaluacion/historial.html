@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial de Evaluación{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:lista' %}">Evaluaciones</a></li>
+<li class="breadcrumb-item active">Historial</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-0">
+            <i class="bi bi-clock-history text-primary"></i>
+            Historial de Evaluación
+        </h4>
+        <p class="text-muted">{{ evaluacion.criterio.codigo }} - {{ evaluacion.sede.nombre }}</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th>Estado Anterior</th>
+                        <th>Estado Nuevo</th>
+                        <th>Observaciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for registro in historial %}
+                    <tr>
+                        <td>{{ registro.fecha|date:"d/m/Y H:i" }}</td>
+                        <td>{{ registro.usuario.nombre_completo }}</td>
+                        <td>
+                            {% if registro.estado_anterior == 'C' %}
+                            <span class="badge bg-success">Cumple</span>
+                            {% elif registro.estado_anterior == 'NC' %}
+                            <span class="badge bg-danger">No Cumple</span>
+                            {% elif registro.estado_anterior == 'NA' %}
+                            <span class="badge bg-secondary">No Aplica</span>
+                            {% else %}
+                            <span class="badge bg-warning">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if registro.estado_nuevo == 'C' %}
+                            <span class="badge bg-success">Cumple</span>
+                            {% elif registro.estado_nuevo == 'NC' %}
+                            <span class="badge bg-danger">No Cumple</span>
+                            {% elif registro.estado_nuevo == 'NA' %}
+                            <span class="badge bg-secondary">No Aplica</span>
+                            {% else %}
+                            <span class="badge bg-warning">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ registro.observaciones|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">No hay historial disponible</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'evaluacion:detalle' evaluacion.pk %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Volver
+    </a>
+</div>
+{% endblock %}

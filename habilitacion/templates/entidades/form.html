@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if entidad %}Editar{% else %}Nueva{% endif %} Entidad{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'entidades:lista' %}">Entidades</a></li>
+<li class="breadcrumb-item active">{% if entidad %}Editar{% else %}Nueva{% endif %}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-0">
+            <i class="bi bi-building text-primary"></i>
+            {% if entidad %}Editar Entidad{% else %}Nueva Entidad{% endif %}
+        </h4>
+        <p class="text-muted">{% if entidad %}Modifique{% else %}Registre{% endif %} los datos de la entidad prestadora</p>
+    </div>
+</div>
+
+{% if messages %}
+<div class="row mb-3">
+    <div class="col-12">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            <h6 class="text-primary mb-3"><i class="bi bi-info-circle me-2"></i>Información Básica</h6>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Tipo de Prestador *</label>
+                    <select name="tipo_prestador" class="form-select" required>
+                        <option value="">Seleccione...</option>
+                        {% for tipo in tipos_prestador %}
+                        <option value="{{ tipo.id }}" {% if entidad.tipo_prestador_id == tipo.id %}selected{% endif %}>{{ tipo.codigo }} - {{ tipo.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Estado</label>
+                    <select name="estado" class="form-select">
+                        <option value="EN_PROCESO" {% if entidad.estado == 'EN_PROCESO' %}selected{% endif %}>En proceso de habilitación</option>
+                        <option value="ACTIVO" {% if entidad.estado == 'ACTIVO' %}selected{% endif %}>Activo</option>
+                        <option value="INACTIVO" {% if entidad.estado == 'INACTIVO' %}selected{% endif %}>Inactivo</option>
+                        <option value="SUSPENDIDO" {% if entidad.estado == 'SUSPENDIDO' %}selected{% endif %}>Suspendido</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Razón Social *</label>
+                    <input type="text" name="razon_social" class="form-control" value="{{ entidad.razon_social|default:'' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Nombre Comercial</label>
+                    <input type="text" name="nombre_comercial" class="form-control" value="{{ entidad.nombre_comercial|default:'' }}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">NIT *</label>
+                    <input type="text" name="nit" class="form-control" value="{{ entidad.nit|default:'' }}" required>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">DV *</label>
+                    <input type="text" name="digito_verificacion" class="form-control" maxlength="1" value="{{ entidad.digito_verificacion|default:'' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Código REPS</label>
+                    <input type="text" name="codigo_reps" class="form-control" value="{{ entidad.codigo_reps|default:'' }}">
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <h6 class="text-primary mb-3"><i class="bi bi-person-badge me-2"></i>Representante Legal</h6>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Nombre del Representante Legal *</label>
+                    <input type="text" name="representante_legal" class="form-control" value="{{ entidad.representante_legal|default:'' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Documento del Representante *</label>
+                    <input type="text" name="documento_representante" class="form-control" value="{{ entidad.documento_representante|default:'' }}" required>
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <h6 class="text-primary mb-3"><i class="bi bi-geo-alt me-2"></i>Ubicación</h6>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Departamento *</label>
+                    <select name="departamento" class="form-select" id="departamento" required>
+                        <option value="">Seleccione...</option>
+                        {% for depto in departamentos %}
+                        <option value="{{ depto.id }}" {% if entidad.departamento_id == depto.id %}selected{% endif %}>{{ depto.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Municipio *</label>
+                    <select name="municipio" class="form-select" id="municipio" required>
+                        <option value="">Seleccione...</option>
+                        {% for mun in municipios %}
+                        <option value="{{ mun.id }}" {% if entidad.municipio_id == mun.id %}selected{% endif %}>{{ mun.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Dirección *</label>
+                <input type="text" name="direccion" class="form-control" value="{{ entidad.direccion|default:'' }}" required>
+            </div>
+
+            <hr class="my-4">
+            <h6 class="text-primary mb-3"><i class="bi bi-telephone me-2"></i>Contacto</h6>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Teléfono *</label>
+                    <input type="text" name="telefono" class="form-control" value="{{ entidad.telefono|default:'' }}" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Email *</label>
+                    <input type="email" name="email" class="form-control" value="{{ entidad.email|default:'' }}" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Sitio Web</label>
+                    <input type="url" name="sitio_web" class="form-control" value="{{ entidad.sitio_web|default:'' }}" placeholder="https://">
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <h6 class="text-primary mb-3"><i class="bi bi-people me-2"></i>Personal de Gestión</h6>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Gerente/Director</label>
+                    <input type="text" name="gerente" class="form-control" value="{{ entidad.gerente|default:'' }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Responsable de Calidad</label>
+                    <input type="text" name="responsable_calidad" class="form-control" value="{{ entidad.responsable_calidad|default:'' }}">
+                </div>
+            </div>
+
+            <hr class="my-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg me-1"></i>Guardar
+            </button>
+            <a href="{% url 'entidades:lista' %}" class="btn btn-outline-secondary">
+                Cancelar
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Mejorar con IA{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'documentos:lista' %}">Documentos</a></li>
+<li class="breadcrumb-item active">Mejorar con IA</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-0">
+            <i class="bi bi-magic text-primary"></i>
+            Mejorar Documento con IA
+        </h4>
+        <p class="text-muted">Utilice inteligencia artificial para mejorar el contenido existente</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-pencil-square me-2"></i>Texto a Mejorar
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">Contenido Original</label>
+                <textarea name="contenido_original" class="form-control" rows="8" placeholder="Pegue aquí el texto que desea mejorar..." required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Tipo de Mejora</label>
+                <select name="tipo_mejora" class="form-select">
+                    <option value="claridad">Mejorar claridad y redacción</option>
+                    <option value="tecnico">Ajustar lenguaje técnico</option>
+                    <option value="normativo">Alinear con normativa</option>
+                    <option value="expansion">Expandir contenido</option>
+                    <option value="resumen">Resumir contenido</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Instrucciones Adicionales (opcional)</label>
+                <textarea name="instrucciones" class="form-control" rows="3" placeholder="Indique instrucciones específicas para la mejora..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-magic me-1"></i>Mejorar con IA
+            </button>
+            <a href="{% url 'documentos:lista' %}" class="btn btn-outline-secondary">
+                Cancelar
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}
