@@ -1,0 +1,13 @@
+Django
+django-crispy-forms
+crispy-bootstrap5
+python-dotenv
+python-decouple
+openpyxl
+openai
+Pillow
+python-docx
+reportlab
+whitenoise
+gunicorn
+psycopg2-binary
