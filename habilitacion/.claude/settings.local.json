@@ -24,7 +24,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(pip freeze:*)"
+      "Bash(pip freeze:*)",
+      "Bash(grep:*)",
+      "Bash(dir:*)"
     ]
   }
 }
