@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:repositorio.unbosque.edu.co)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(django-admin startproject:*)",
+      "Bash(.venv\\\\Scripts\\\\python.exe:*)",
+      "Bash(..venvScriptspython.exe manage.py makemigrations)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(.venvScriptspython.exe manage.py shell -c \"from entidades.models import TipoPrestador; print\\(list\\(TipoPrestador.objects.values_list\\(''codigo'', ''nombre''\\)\\)\\)\")",
+      "Bash(C:/Users/HOME/PycharmProjects/habilitacion/.venv/Scripts/python.exe:*)",
+      "Bash(.venvScriptspython.exe manage.py check)",
+      "Bash(timeout:*)",
+      "Bash(.venvScriptspython.exe manage.py runserver 8004)",
+      "Bash(.venv/Scripts/python.exe manage.py runserver 8004)",
+      "Bash(.venv/Scripts/python.exe:*)",
+      "Bash(git reset:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git branch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}
