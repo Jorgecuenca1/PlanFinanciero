@@ -1,6 +1,7 @@
 """
 Vistas del módulo evaluación.
 Gestión de autoevaluaciones, cumplimiento de criterios y vigencias.
+Sistema basado en SEDES (no en Entidades).
 """
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -9,8 +10,9 @@ from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
+from django.db.models import Count, Q
 from .models import Evaluacion, DocumentoEvaluacion, HistorialEvaluacion, ResumenCumplimiento, PeriodoEvaluacion, EvaluacionCriterio, ArchivoRepositorio
-from entidades.models import EntidadPrestadora, Sede, ConfiguracionEvaluacion
+from entidades.models import EntidadPrestadora, Sede, ConfiguracionEvaluacionSede
 from estandares.models import GrupoEstandar, Estandar, Criterio, Servicio
 from usuarios.models import Usuario
 import json
@@ -896,3 +898,602 @@ def lista_estandares_evaluar(request):
         'entidad': entidad,
         'estandares': estandares_disponibles,
     })
+
+
+# ===============================
+# NUEVAS VISTAS PARA NAVEGACIÓN EN ÁRBOL POR SEDE
+# ===============================
+
+@login_required
+def lista_sedes_evaluar(request):
+    """Lista de sedes disponibles para evaluar"""
+    if not request.user.entidad:
+        messages.error(request, 'No tiene una entidad asignada.')
+        return redirect('core:dashboard')
+
+    entidad = request.user.entidad
+    sedes = Sede.objects.filter(entidad=entidad, activa=True)
+
+    # Calcular estadísticas por sede
+    sedes_data = []
+    for sede in sedes:
+        # Obtener grupos habilitados para esta sede
+        grupos_habilitados = ConfiguracionEvaluacionSede.objects.filter(
+            sede=sede, activo=True
+        ).select_related('grupo_estandar')
+
+        # Contar criterios y evaluaciones
+        total_criterios = 0
+        evaluados = 0
+        cumple = 0
+        no_cumple = 0
+        no_aplica = 0
+
+        for config in grupos_habilitados:
+            grupo = config.grupo_estandar
+            criterios_grupo = Criterio.objects.filter(
+                estandar__grupo=grupo,
+                activo=True,
+                es_titulo=False
+            ).count()
+            total_criterios += criterios_grupo
+
+            evals = EvaluacionCriterio.objects.filter(
+                sede=sede,
+                criterio__estandar__grupo=grupo
+            )
+            evaluados += evals.exclude(estado='P').count()
+            cumple += evals.filter(estado='C').count()
+            no_cumple += evals.filter(estado='NC').count()
+            no_aplica += evals.filter(estado='NA').count()
+
+        # Porcentaje de cumplimiento (sobre criterios que aplican)
+        criterios_aplican = total_criterios - no_aplica
+        porcentaje = round((cumple / criterios_aplican * 100), 1) if criterios_aplican > 0 else 0
+
+        sedes_data.append({
+            'sede': sede,
+            'total_criterios': total_criterios,
+            'evaluados': evaluados,
+            'cumple': cumple,
+            'no_cumple': no_cumple,
+            'no_aplica': no_aplica,
+            'porcentaje': porcentaje,
+            'grupos_habilitados': grupos_habilitados.count()
+        })
+
+    return render(request, 'evaluacion/sedes/lista.html', {
+        'titulo': 'Sedes a Evaluar',
+        'entidad': entidad,
+        'sedes_data': sedes_data,
+    })
+
+
+@login_required
+def sede_categorias(request, sede_pk):
+    """
+    Vista de categorías (grupos de estándares) para una sede.
+    Estructura de árbol: Sede -> Categorías (11.1, 11.2, etc.)
+    """
+    sede = get_object_or_404(Sede, pk=sede_pk)
+
+    # Verificar acceso
+    if request.user.entidad != sede.entidad and request.user.rol != 'SUPER':
+        messages.error(request, 'No tiene acceso a esta sede.')
+        return redirect('evaluacion:sedes_evaluar')
+
+    # Obtener grupos habilitados para esta sede
+    configuraciones = ConfiguracionEvaluacionSede.objects.filter(
+        sede=sede, activo=True
+    ).select_related('grupo_estandar')
+
+    # Si no hay configuración, crear la obligatoria (11.1)
+    if not configuraciones.exists():
+        ConfiguracionEvaluacionSede.crear_configuracion_obligatoria(sede, request.user)
+        configuraciones = ConfiguracionEvaluacionSede.objects.filter(
+            sede=sede, activo=True
+        ).select_related('grupo_estandar')
+
+    categorias_data = []
+    total_criterios_sede = 0
+    total_cumple_sede = 0
+    total_no_cumple_sede = 0
+    total_na_sede = 0
+    total_pendiente_sede = 0
+
+    for config in configuraciones:
+        grupo = config.grupo_estandar
+
+        # Contar criterios del grupo
+        criterios_grupo = Criterio.objects.filter(
+            estandar__grupo=grupo,
+            activo=True,
+            es_titulo=False
+        )
+        total_criterios = criterios_grupo.count()
+
+        # Contar evaluaciones
+        evals = EvaluacionCriterio.objects.filter(
+            sede=sede,
+            criterio__in=criterios_grupo
+        )
+        cumple = evals.filter(estado='C').count()
+        no_cumple = evals.filter(estado='NC').count()
+        no_aplica = evals.filter(estado='NA').count()
+        pendiente = total_criterios - cumple - no_cumple - no_aplica
+
+        # Acumular totales
+        total_criterios_sede += total_criterios
+        total_cumple_sede += cumple
+        total_no_cumple_sede += no_cumple
+        total_na_sede += no_aplica
+        total_pendiente_sede += pendiente
+
+        # Porcentaje de cumplimiento
+        criterios_aplican = total_criterios - no_aplica
+        porcentaje = round((cumple / criterios_aplican * 100), 1) if criterios_aplican > 0 else 0
+
+        # Obtener subcategorías (estándares)
+        estandares = Estandar.objects.filter(grupo=grupo, activo=True).order_by('orden')
+
+        categorias_data.append({
+            'grupo': grupo,
+            'config': config,
+            'estandares': estandares,
+            'total_criterios': total_criterios,
+            'cumple': cumple,
+            'no_cumple': no_cumple,
+            'no_aplica': no_aplica,
+            'pendiente': pendiente,
+            'porcentaje': porcentaje,
+            'es_obligatorio': grupo.codigo == '11.1'
+        })
+
+    # Calcular porcentaje general
+    criterios_aplican_sede = total_criterios_sede - total_na_sede
+    porcentaje_general = round((total_cumple_sede / criterios_aplican_sede * 100), 1) if criterios_aplican_sede > 0 else 0
+
+    return render(request, 'evaluacion/sedes/categorias.html', {
+        'titulo': f'Evaluación - {sede.nombre}',
+        'sede': sede,
+        'categorias_data': categorias_data,
+        'resumen': {
+            'total_criterios': total_criterios_sede,
+            'cumple': total_cumple_sede,
+            'no_cumple': total_no_cumple_sede,
+            'no_aplica': total_na_sede,
+            'pendiente': total_pendiente_sede,
+            'porcentaje': porcentaje_general
+        }
+    })
+
+
+@login_required
+def sede_subcategorias(request, sede_pk, grupo_pk):
+    """
+    Vista de subcategorías (estándares) dentro de una categoría.
+    Estructura: Sede -> Categoría (11.1) -> Subcategorías (11.1.1, 11.1.2, etc.)
+    """
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    grupo = get_object_or_404(GrupoEstandar, pk=grupo_pk)
+
+    # Verificar acceso
+    if request.user.entidad != sede.entidad and request.user.rol != 'SUPER':
+        messages.error(request, 'No tiene acceso a esta sede.')
+        return redirect('evaluacion:sedes_evaluar')
+
+    # Verificar que el grupo está habilitado para esta sede
+    es_obligatorio = grupo.codigo == '11.1'
+    config = ConfiguracionEvaluacionSede.objects.filter(
+        sede=sede, grupo_estandar=grupo, activo=True
+    ).first()
+
+    if not es_obligatorio and not config:
+        messages.error(request, 'Este grupo de criterios no está habilitado para esta sede.')
+        return redirect('evaluacion:sede_categorias', sede_pk=sede.pk)
+
+    # Obtener estándares del grupo
+    estandares = Estandar.objects.filter(grupo=grupo, activo=True).order_by('orden')
+
+    subcategorias_data = []
+    for estandar in estandares:
+        # Contar criterios
+        criterios = Criterio.objects.filter(
+            estandar=estandar,
+            activo=True,
+            es_titulo=False
+        )
+        total_criterios = criterios.count()
+
+        # Contar evaluaciones
+        evals = EvaluacionCriterio.objects.filter(
+            sede=sede,
+            criterio__in=criterios
+        )
+        cumple = evals.filter(estado='C').count()
+        no_cumple = evals.filter(estado='NC').count()
+        no_aplica = evals.filter(estado='NA').count()
+        pendiente = total_criterios - cumple - no_cumple - no_aplica
+
+        # Porcentaje
+        criterios_aplican = total_criterios - no_aplica
+        porcentaje = round((cumple / criterios_aplican * 100), 1) if criterios_aplican > 0 else 0
+
+        subcategorias_data.append({
+            'estandar': estandar,
+            'total_criterios': total_criterios,
+            'cumple': cumple,
+            'no_cumple': no_cumple,
+            'no_aplica': no_aplica,
+            'pendiente': pendiente,
+            'porcentaje': porcentaje
+        })
+
+    return render(request, 'evaluacion/sedes/subcategorias.html', {
+        'titulo': f'{grupo.nombre}',
+        'sede': sede,
+        'grupo': grupo,
+        'subcategorias_data': subcategorias_data,
+        'es_obligatorio': es_obligatorio
+    })
+
+
+@login_required
+def sede_criterios_estandar(request, sede_pk, estandar_pk):
+    """
+    Vista de criterios para evaluar dentro de un estándar.
+    Estructura: Sede -> Categoría -> Subcategoría (Estándar) -> Criterios
+    """
+    sede = get_object_or_404(Sede, pk=sede_pk)
+    estandar = get_object_or_404(Estandar, pk=estandar_pk)
+
+    # Verificar acceso
+    if request.user.entidad != sede.entidad and request.user.rol != 'SUPER':
+        messages.error(request, 'No tiene acceso a esta sede.')
+        return redirect('evaluacion:sedes_evaluar')
+
+    # Obtener criterios del estándar (incluyendo títulos para estructura)
+    criterios = Criterio.objects.filter(
+        estandar=estandar,
+        activo=True
+    ).order_by('orden', 'numero')
+
+    # Crear o obtener evaluaciones
+    criterios_data = []
+    for criterio in criterios:
+        # Solo los criterios de tipo 'CRITERIO' son evaluables
+        if criterio.tipo_criterio != 'CRITERIO':
+            # Es un título o subtítulo, no requiere evaluación
+            criterios_data.append({
+                'criterio': criterio,
+                'es_titulo': True,
+                'tipo': criterio.tipo_criterio,
+                'evaluacion': None
+            })
+        else:
+            # Obtener o crear evaluación para criterios evaluables
+            evaluacion, created = EvaluacionCriterio.objects.get_or_create(
+                sede=sede,
+                criterio=criterio,
+                defaults={'estado': 'P', 'modificado_por': request.user}
+            )
+            criterios_data.append({
+                'criterio': criterio,
+                'es_titulo': False,
+                'tipo': 'CRITERIO',
+                'evaluacion': evaluacion,
+                'archivos_count': evaluacion.cantidad_archivos
+            })
+
+    # Calcular resumen (solo criterios evaluables)
+    evaluaciones = EvaluacionCriterio.objects.filter(
+        sede=sede,
+        criterio__estandar=estandar,
+        criterio__tipo_criterio='CRITERIO'
+    )
+    total = evaluaciones.count()
+    cumple = evaluaciones.filter(estado='C').count()
+    no_cumple = evaluaciones.filter(estado='NC').count()
+    no_aplica = evaluaciones.filter(estado='NA').count()
+    pendiente = total - cumple - no_cumple - no_aplica
+
+    criterios_aplican = total - no_aplica
+    porcentaje = round((cumple / criterios_aplican * 100), 1) if criterios_aplican > 0 else 0
+
+    # Obtener usuarios para asignar responsables
+    usuarios_entidad = Usuario.objects.filter(entidad=sede.entidad, is_active=True)
+
+    return render(request, 'evaluacion/sedes/criterios.html', {
+        'titulo': f'{estandar.nombre}',
+        'sede': sede,
+        'estandar': estandar,
+        'grupo': estandar.grupo,
+        'criterios_data': criterios_data,
+        'usuarios_entidad': usuarios_entidad,
+        'estados': EvaluacionCriterio.ESTADOS,
+        'resumen': {
+            'total': total,
+            'cumple': cumple,
+            'no_cumple': no_cumple,
+            'no_aplica': no_aplica,
+            'pendiente': pendiente,
+            'porcentaje': porcentaje
+        }
+    })
+
+
+@login_required
+def sede_configuracion(request, sede_pk):
+    """
+    Configuración de grupos de criterios habilitados para una sede.
+    El grupo 11.1 es obligatorio y no se puede desactivar.
+    """
+    sede = get_object_or_404(Sede, pk=sede_pk)
+
+    # Verificar acceso
+    if request.user.entidad != sede.entidad and request.user.rol != 'SUPER':
+        messages.error(request, 'No tiene acceso a esta sede.')
+        return redirect('evaluacion:sedes_evaluar')
+
+    # Obtener todos los grupos de estándares
+    grupos = GrupoEstandar.objects.filter(activo=True).order_by('orden')
+
+    if request.method == 'POST':
+        grupos_seleccionados = request.POST.getlist('grupos')
+
+        for grupo in grupos:
+            es_obligatorio = grupo.codigo == '11.1'
+            esta_seleccionado = str(grupo.id) in grupos_seleccionados
+
+            if es_obligatorio:
+                # Asegurar que el grupo obligatorio esté siempre activo
+                ConfiguracionEvaluacionSede.objects.get_or_create(
+                    sede=sede,
+                    grupo_estandar=grupo,
+                    defaults={'activo': True, 'activado_por': request.user}
+                )
+            else:
+                config, created = ConfiguracionEvaluacionSede.objects.get_or_create(
+                    sede=sede,
+                    grupo_estandar=grupo,
+                    defaults={'activo': esta_seleccionado, 'activado_por': request.user}
+                )
+                if not created and config.activo != esta_seleccionado:
+                    config.activo = esta_seleccionado
+                    config.activado_por = request.user
+                    config.save()
+
+        messages.success(request, 'Configuración guardada correctamente.')
+        return redirect('evaluacion:sede_categorias', sede_pk=sede.pk)
+
+    # Preparar datos de grupos
+    grupos_data = []
+    for grupo in grupos:
+        config = ConfiguracionEvaluacionSede.objects.filter(
+            sede=sede, grupo_estandar=grupo
+        ).first()
+
+        es_obligatorio = grupo.codigo == '11.1'
+        activo = config.activo if config else es_obligatorio
+
+        # Contar estándares y criterios
+        estandares_count = Estandar.objects.filter(grupo=grupo, activo=True).count()
+        criterios_count = Criterio.objects.filter(
+            estandar__grupo=grupo,
+            activo=True,
+            es_titulo=False
+        ).count()
+
+        grupos_data.append({
+            'grupo': grupo,
+            'activo': activo,
+            'es_obligatorio': es_obligatorio,
+            'estandares_count': estandares_count,
+            'criterios_count': criterios_count,
+            'config': config
+        })
+
+    return render(request, 'evaluacion/sedes/configuracion.html', {
+        'titulo': f'Configuración - {sede.nombre}',
+        'sede': sede,
+        'grupos_data': grupos_data
+    })
+
+
+@login_required
+def ver_documentos_criterio(request, evaluacion_pk):
+    """
+    Vista separada para ver los documentos de un criterio.
+    Se accede mediante "Ir a ver documentos".
+    """
+    evaluacion = get_object_or_404(EvaluacionCriterio, pk=evaluacion_pk)
+
+    # Verificar acceso
+    if request.user.entidad != evaluacion.sede.entidad and request.user.rol != 'SUPER':
+        messages.error(request, 'No tiene acceso a estos documentos.')
+        return redirect('core:dashboard')
+
+    archivos = evaluacion.archivos_repositorio.all().order_by('-fecha_subida')
+
+    return render(request, 'evaluacion/sedes/documentos_criterio.html', {
+        'titulo': f'Documentos - {evaluacion.criterio.numero}',
+        'evaluacion': evaluacion,
+        'criterio': evaluacion.criterio,
+        'sede': evaluacion.sede,
+        'archivos': archivos
+    })
+
+
+@login_required
+def resumen_evaluacion_sede(request, sede_pk):
+    """
+    Resumen de evaluación de una sede con conteo de C, NC, N/A.
+    Solo para reportes, la evaluación se hace sobre criterios que aplican.
+    """
+    sede = get_object_or_404(Sede, pk=sede_pk)
+
+    # Verificar acceso
+    if request.user.entidad != sede.entidad and request.user.rol != 'SUPER':
+        messages.error(request, 'No tiene acceso a esta sede.')
+        return redirect('evaluacion:sedes_evaluar')
+
+    # Obtener grupos habilitados
+    configuraciones = ConfiguracionEvaluacionSede.objects.filter(
+        sede=sede, activo=True
+    ).select_related('grupo_estandar')
+
+    resumen_grupos = []
+    totales = {'criterios': 0, 'cumple': 0, 'no_cumple': 0, 'no_aplica': 0, 'pendiente': 0}
+
+    for config in configuraciones:
+        grupo = config.grupo_estandar
+
+        # Calcular estadísticas del grupo
+        evals = EvaluacionCriterio.objects.filter(
+            sede=sede,
+            criterio__estandar__grupo=grupo,
+            criterio__es_titulo=False
+        )
+
+        total = Criterio.objects.filter(
+            estandar__grupo=grupo,
+            activo=True,
+            es_titulo=False
+        ).count()
+
+        cumple = evals.filter(estado='C').count()
+        no_cumple = evals.filter(estado='NC').count()
+        no_aplica = evals.filter(estado='NA').count()
+        pendiente = total - cumple - no_cumple - no_aplica
+
+        # Porcentaje sobre criterios que aplican
+        criterios_aplican = total - no_aplica
+        porcentaje = round((cumple / criterios_aplican * 100), 1) if criterios_aplican > 0 else 0
+
+        resumen_grupos.append({
+            'grupo': grupo,
+            'total': total,
+            'cumple': cumple,
+            'no_cumple': no_cumple,
+            'no_aplica': no_aplica,
+            'pendiente': pendiente,
+            'porcentaje': porcentaje
+        })
+
+        # Acumular totales
+        totales['criterios'] += total
+        totales['cumple'] += cumple
+        totales['no_cumple'] += no_cumple
+        totales['no_aplica'] += no_aplica
+        totales['pendiente'] += pendiente
+
+    # Porcentaje general
+    criterios_aplican = totales['criterios'] - totales['no_aplica']
+    totales['porcentaje'] = round((totales['cumple'] / criterios_aplican * 100), 1) if criterios_aplican > 0 else 0
+
+    return render(request, 'evaluacion/sedes/resumen.html', {
+        'titulo': f'Resumen de Evaluación - {sede.nombre}',
+        'sede': sede,
+        'resumen_grupos': resumen_grupos,
+        'totales': totales
+    })
+
+
+# ===============================
+# APIS AJAX ACTUALIZADAS PARA SEDES
+# ===============================
+
+@login_required
+@require_POST
+def guardar_evaluacion_criterio_sede(request):
+    """API para guardar evaluación de un criterio por SEDE (AJAX)"""
+    try:
+        data = json.loads(request.body)
+        evaluacion_id = data.get('evaluacion_id')
+        campo = data.get('campo')
+        valor = data.get('valor')
+
+        evaluacion = get_object_or_404(EvaluacionCriterio, pk=evaluacion_id)
+
+        # Verificar acceso
+        if request.user.entidad != evaluacion.sede.entidad and request.user.rol != 'SUPER':
+            return JsonResponse({'error': 'No tiene acceso'}, status=403)
+
+        # Actualizar el campo correspondiente
+        if campo == 'estado':
+            evaluacion.estado = valor
+            evaluacion.fecha_evaluacion = timezone.now()
+        elif campo == 'en_proceso':
+            evaluacion.en_proceso = valor
+        elif campo == 'responsable':
+            if valor:
+                evaluacion.responsable_id = valor
+            else:
+                evaluacion.responsable = None
+        elif campo == 'comentarios':
+            evaluacion.comentarios = valor
+        elif campo == 'justificacion_na':
+            evaluacion.justificacion_na = valor
+
+        evaluacion.modificado_por = request.user
+        evaluacion.save()
+
+        return JsonResponse({
+            'success': True,
+            'mensaje': 'Guardado correctamente'
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_POST
+def subir_archivo_criterio_sede(request, evaluacion_pk):
+    """Subir archivo al repositorio de un criterio (por SEDE)"""
+    evaluacion = get_object_or_404(EvaluacionCriterio, pk=evaluacion_pk)
+
+    # Verificar acceso
+    if request.user.entidad != evaluacion.sede.entidad and request.user.rol != 'SUPER':
+        return JsonResponse({'error': 'No tiene acceso'}, status=403)
+
+    if 'archivo' not in request.FILES:
+        return JsonResponse({'error': 'No se envió ningún archivo'}, status=400)
+
+    archivo = request.FILES['archivo']
+    nombre = request.POST.get('nombre', archivo.name)
+    descripcion = request.POST.get('descripcion', '')
+
+    archivo_repo = ArchivoRepositorio.objects.create(
+        evaluacion=evaluacion,
+        archivo=archivo,
+        nombre=nombre,
+        descripcion=descripcion,
+        subido_por=request.user
+    )
+
+    return JsonResponse({
+        'success': True,
+        'archivo': {
+            'id': archivo_repo.id,
+            'nombre': archivo_repo.nombre,
+            'url': archivo_repo.archivo.url,
+            'fecha': archivo_repo.fecha_subida.strftime('%Y-%m-%d %H:%M')
+        }
+    })
+
+
+@login_required
+@require_POST
+def eliminar_archivo_criterio_sede(request, archivo_pk):
+    """Eliminar archivo del repositorio (por SEDE)"""
+    archivo = get_object_or_404(ArchivoRepositorio, pk=archivo_pk)
+
+    # Verificar acceso
+    if request.user.entidad != archivo.evaluacion.sede.entidad and request.user.rol != 'SUPER':
+        return JsonResponse({'error': 'No tiene acceso'}, status=403)
+
+    archivo.archivo.delete()
+    archivo.delete()
+
+    return JsonResponse({'success': True})

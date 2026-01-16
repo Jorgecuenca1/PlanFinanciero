@@ -159,15 +159,10 @@
             </li>
 
             {% if user.entidad %}
-            <li class="nav-section">Mi Entidad</li>
+            <li class="nav-section">Evaluacion</li>
             <li class="nav-item">
-                <a class="nav-link" href="{% url 'evaluacion:dashboard_entidad' %}">
-                    <i class="bi bi-clipboard-check"></i> Mi Evaluacion
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'evaluacion:lista_estandares' %}">
-                    <i class="bi bi-list-check"></i> Evaluar Estandares
+                <a class="nav-link {% if 'evaluacion' in request.path and 'sede' in request.path %}active{% endif %}" href="{% url 'evaluacion:sedes_evaluar' %}">
+                    <i class="bi bi-building-check"></i> Sedes
                 </a>
             </li>
             {% endif %}
@@ -177,21 +172,6 @@
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'entidades:lista' %}">
                     <i class="bi bi-building"></i> Entidades
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'estandares:lista_grupos' %}">
-                    <i class="bi bi-list-check"></i> Estándares
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'evaluacion:lista' %}">
-                    <i class="bi bi-clipboard-check"></i> Evaluaciones
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'evaluacion:lista_vigencias' %}">
-                    <i class="bi bi-calendar-range"></i> Vigencias
                 </a>
             </li>
             <li class="nav-item">

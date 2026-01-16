@@ -462,8 +462,9 @@ class ResumenCumplimiento(models.Model):
 
 class EvaluacionCriterio(models.Model):
     """
-    Evaluación de cada criterio por entidad.
+    Evaluación de cada criterio por SEDE.
     Sistema simplificado para evaluación directa desde tabla.
+    La evaluación se hace sobre criterios que aplican a cada sede específica.
     """
 
     ESTADOS = [
@@ -473,17 +474,17 @@ class EvaluacionCriterio(models.Model):
         ('NA', 'No Aplica'),
     ]
 
-    # Relación con la entidad y el criterio
-    entidad = models.ForeignKey(
-        'entidades.EntidadPrestadora',
+    # Relación con la SEDE y el criterio
+    sede = models.ForeignKey(
+        'entidades.Sede',
         on_delete=models.CASCADE,
         related_name='evaluaciones_criterios',
-        verbose_name='Entidad'
+        verbose_name='Sede'
     )
     criterio = models.ForeignKey(
         'estandares.Criterio',
         on_delete=models.CASCADE,
-        related_name='evaluaciones_entidad',
+        related_name='evaluaciones_sede',
         verbose_name='Criterio'
     )
 
@@ -515,9 +516,17 @@ class EvaluacionCriterio(models.Model):
     # Comentarios
     comentarios = models.TextField('Comentarios', blank=True)
 
+    # Justificación cuando es N/A
+    justificacion_na = models.TextField(
+        'Justificación No Aplica',
+        blank=True,
+        help_text='Obligatorio cuando el estado es NA'
+    )
+
     # Auditoría
     fecha_creacion = models.DateTimeField('Fecha de creación', auto_now_add=True)
     fecha_modificacion = models.DateTimeField('Fecha de modificación', auto_now=True)
+    fecha_evaluacion = models.DateTimeField('Fecha de evaluación', null=True, blank=True)
     modificado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -529,11 +538,11 @@ class EvaluacionCriterio(models.Model):
     class Meta:
         verbose_name = 'Evaluación de Criterio'
         verbose_name_plural = 'Evaluaciones de Criterios'
-        unique_together = ['entidad', 'criterio']
-        ordering = ['entidad', 'criterio__orden']
+        unique_together = ['sede', 'criterio']
+        ordering = ['sede', 'criterio__orden']
 
     def __str__(self):
-        return f"{self.entidad.razon_social} - {self.criterio.numero}: {self.get_estado_display()}"
+        return f"{self.sede.nombre} - {self.criterio.numero}: {self.get_estado_display()}"
 
     @property
     def tiene_archivos(self):
@@ -544,6 +553,11 @@ class EvaluacionCriterio(models.Model):
     def cantidad_archivos(self):
         """Retorna la cantidad de archivos adjuntos"""
         return self.archivos_repositorio.count()
+
+    @property
+    def entidad(self):
+        """Acceso a la entidad a través de la sede"""
+        return self.sede.entidad
 
 
 class ArchivoRepositorio(models.Model):

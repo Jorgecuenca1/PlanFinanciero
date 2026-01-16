@@ -409,23 +409,23 @@ class VigenciaHabilitacion(models.Model):
         return self.fecha_inicio <= hoy <= self.fecha_fin and self.estado == 'ACTIVA'
 
 
-class ConfiguracionEvaluacion(models.Model):
+class ConfiguracionEvaluacionSede(models.Model):
     """
-    Configuración de servicios habilitados para evaluación por entidad.
-    Los servicios del grupo 11.1 son obligatorios y se crean automáticamente.
-    Los servicios de grupos 11.2 a 11.6 son opcionales y se habilitan aquí.
+    Configuración de grupos de criterios habilitados para evaluación por SEDE.
+    El grupo 11.1 es obligatorio y siempre está activo.
+    Los grupos 11.2 a 11.6 son opcionales y se habilitan aquí según los servicios de la sede.
     """
-    entidad = models.ForeignKey(
-        EntidadPrestadora,
+    sede = models.ForeignKey(
+        Sede,
         on_delete=models.CASCADE,
         related_name='configuraciones_evaluacion',
-        verbose_name='Entidad'
+        verbose_name='Sede'
     )
-    servicio = models.ForeignKey(
-        'estandares.Servicio',
+    grupo_estandar = models.ForeignKey(
+        'estandares.GrupoEstandar',
         on_delete=models.CASCADE,
-        related_name='configuraciones_entidad',
-        verbose_name='Servicio'
+        related_name='configuraciones_sede',
+        verbose_name='Grupo de Estándares'
     )
     activo = models.BooleanField('Activo', default=True)
     fecha_activacion = models.DateTimeField('Fecha de activación', auto_now_add=True)
@@ -434,15 +434,28 @@ class ConfiguracionEvaluacion(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='servicios_activados'
+        related_name='grupos_activados'
     )
+    observaciones = models.TextField('Observaciones', blank=True)
 
     class Meta:
-        verbose_name = 'Configuración de Evaluación'
-        verbose_name_plural = 'Configuraciones de Evaluación'
-        unique_together = ['entidad', 'servicio']
-        ordering = ['entidad', 'servicio__codigo']
+        verbose_name = 'Configuración de Evaluación por Sede'
+        verbose_name_plural = 'Configuraciones de Evaluación por Sede'
+        unique_together = ['sede', 'grupo_estandar']
+        ordering = ['sede', 'grupo_estandar__orden']
 
     def __str__(self):
         estado = 'Activo' if self.activo else 'Inactivo'
-        return f"{self.entidad.razon_social} - {self.servicio.nombre} ({estado})"
+        return f"{self.sede.nombre} - {self.grupo_estandar.nombre} ({estado})"
+
+    @classmethod
+    def crear_configuracion_obligatoria(cls, sede, usuario=None):
+        """Crea la configuración obligatoria (11.1) para una sede nueva"""
+        from estandares.models import GrupoEstandar
+        grupo_obligatorio = GrupoEstandar.objects.filter(codigo='11.1').first()
+        if grupo_obligatorio:
+            cls.objects.get_or_create(
+                sede=sede,
+                grupo_estandar=grupo_obligatorio,
+                defaults={'activo': True, 'activado_por': usuario}
+            )

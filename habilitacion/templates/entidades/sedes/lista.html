@@ -37,10 +37,10 @@
                     <tr>
                         <td>{{ sede.nombre }}</td>
                         <td>{{ sede.entidad.razon_social }}</td>
-                        <td><code>{{ sede.codigo_reps|default:"-" }}</code></td>
+                        <td><code>{{ sede.codigo_reps_sede|default:"-" }}</code></td>
                         <td>{{ sede.municipio.nombre|default:"-" }}</td>
                         <td>
-                            {% if sede.activo %}
+                            {% if sede.activa %}
                             <span class="badge bg-success">Activa</span>
                             {% else %}
                             <span class="badge bg-danger">Inactiva</span>

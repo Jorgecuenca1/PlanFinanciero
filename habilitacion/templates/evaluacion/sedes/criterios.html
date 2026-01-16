@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:sedes_evaluar' %}">Sedes</a></li>
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:sede_categorias' sede_pk=sede.pk %}">{{ sede.nombre }}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:sede_subcategorias' sede_pk=sede.pk grupo_pk=grupo.pk %}">{{ grupo.codigo }}</a></li>
+<li class="breadcrumb-item active">{{ estandar.codigo }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .criterio-row {
+        transition: background-color 0.3s;
+    }
+    .criterio-row:hover {
+        background-color: #f8f9fa;
+    }
+    .criterio-titulo {
+        background-color: #1e3a5f;
+        color: white;
+        font-weight: bold;
+    }
+    .criterio-subtitulo {
+        background-color: #e9ecef;
+        font-weight: 600;
+        font-style: italic;
+    }
+    .estado-select {
+        min-width: 100px;
+    }
+    .btn-docs {
+        position: relative;
+    }
+    .btn-docs .badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+    }
+    .criterio-texto {
+        max-width: 500px;
+    }
+    .estado-C { background-color: #d4edda !important; }
+    .estado-NC { background-color: #f8d7da !important; }
+    .estado-NA { background-color: #e2e3e5 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+            <div>
+                <h2><i class="bi bi-list-check"></i> {{ estandar.codigo }} - {{ estandar.nombre }}</h2>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-geo-alt"></i> {{ sede.nombre }} |
+                    <i class="bi bi-folder"></i> {{ grupo.nombre }}
+                </p>
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'evaluacion:sede_subcategorias' sede_pk=sede.pk grupo_pk=grupo.pk %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+                <button type="button" class="btn btn-outline-primary" onclick="mostrarResumen()">
+                    <i class="bi bi-bar-chart"></i> Evaluar lo que llevo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumen del Estandar -->
+<div class="card mb-4 bg-light">
+    <div class="card-body py-2">
+        <div class="row align-items-center text-center">
+            <div class="col">
+                <span class="badge bg-success fs-6">{{ resumen.cumple }}</span>
+                <small class="d-block text-muted">Cumple</small>
+            </div>
+            <div class="col">
+                <span class="badge bg-danger fs-6">{{ resumen.no_cumple }}</span>
+                <small class="d-block text-muted">No Cumple</small>
+            </div>
+            <div class="col">
+                <span class="badge bg-secondary fs-6">{{ resumen.no_aplica }}</span>
+                <small class="d-block text-muted">No Aplica</small>
+            </div>
+            <div class="col">
+                <span class="badge bg-warning text-dark fs-6">{{ resumen.pendiente }}</span>
+                <small class="d-block text-muted">Pendiente</small>
+            </div>
+            <div class="col">
+                <span class="badge bg-primary fs-6">{{ resumen.total }}</span>
+                <small class="d-block text-muted">Total</small>
+            </div>
+            <div class="col border-start">
+                <span class="h5 mb-0 {% if resumen.porcentaje >= 80 %}text-success{% elif resumen.porcentaje >= 50 %}text-warning{% else %}text-danger{% endif %}">{{ resumen.porcentaje }}%</span>
+                <small class="d-block text-muted">Cumplimiento</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de Criterios -->
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th style="width: 80px;">No.</th>
+                    <th>Criterio</th>
+                    <th style="width: 120px;">Estado</th>
+                    <th style="width: 100px;">Documentos</th>
+                    <th style="width: 100px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in criterios_data %}
+                {% if item.tipo == 'TITULO' %}
+                <tr class="criterio-titulo">
+                    <td colspan="5">
+                        <i class="bi bi-bookmark-fill"></i>
+                        {{ item.criterio.texto }}
+                    </td>
+                </tr>
+                {% elif item.tipo == 'SUBTITULO' %}
+                <tr class="criterio-subtitulo">
+                    <td colspan="5">
+                        <i class="bi bi-caret-right-fill text-primary"></i>
+                        {{ item.criterio.numero }}. {{ item.criterio.texto }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr class="criterio-row estado-{{ item.evaluacion.estado }}" data-evaluacion-id="{{ item.evaluacion.pk }}">
+                    <td class="fw-bold">{{ item.criterio.numero }}</td>
+                    <td class="criterio-texto">
+                        <small>{{ item.criterio.texto }}</small>
+                        {% if item.criterio.complejidad_aplica %}
+                        <br><span class="badge bg-info">{{ item.criterio.complejidad_aplica }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm estado-select"
+                                onchange="guardarEstado({{ item.evaluacion.pk }}, this.value)"
+                                data-evaluacion="{{ item.evaluacion.pk }}">
+                            {% for value, label in estados %}
+                            <option value="{{ value }}" {% if item.evaluacion.estado == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td class="text-center">
+                        <a href="{% url 'evaluacion:ver_documentos' evaluacion_pk=item.evaluacion.pk %}"
+                           class="btn btn-sm btn-outline-secondary btn-docs">
+                            <i class="bi bi-folder2"></i>
+                            {% if item.archivos_count > 0 %}
+                            <span class="badge bg-primary rounded-pill">{{ item.archivos_count }}</span>
+                            {% endif %}
+                        </a>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="abrirComentarios({{ item.evaluacion.pk }}, '{{ item.criterio.numero }}')">
+                            <i class="bi bi-chat-dots"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de Comentarios -->
+<div class="modal fade" id="modalComentarios" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Comentarios - Criterio <span id="criterioNumero"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="evaluacionIdComentario">
+                <div class="mb-3">
+                    <label class="form-label">Comentarios</label>
+                    <textarea class="form-control" id="comentariosTexto" rows="4"></textarea>
+                </div>
+                <div class="mb-3" id="justificacionNAContainer" style="display: none;">
+                    <label class="form-label">Justificacion No Aplica</label>
+                    <textarea class="form-control" id="justificacionNA" rows="3"
+                              placeholder="Explique por que este criterio no aplica..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="guardarComentarios()">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Resumen -->
+<div class="modal fade" id="modalResumen" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-bar-chart"></i> Resumen de Evaluacion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row text-center mb-4">
+                    <div class="col">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h2 id="resumenCumple">{{ resumen.cumple }}</h2>
+                                <p class="mb-0">Cumple</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body">
+                                <h2 id="resumenNoCumple">{{ resumen.no_cumple }}</h2>
+                                <p class="mb-0">No Cumple</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card bg-secondary text-white">
+                            <div class="card-body">
+                                <h2 id="resumenNA">{{ resumen.no_aplica }}</h2>
+                                <p class="mb-0">No Aplica</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card bg-warning">
+                            <div class="card-body">
+                                <h2 id="resumenPendiente">{{ resumen.pendiente }}</h2>
+                                <p class="mb-0">Pendiente</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h3>Porcentaje de Cumplimiento</h3>
+                    <p class="text-muted">Calculado sobre criterios que aplican (excluyendo N/A)</p>
+                    <div class="display-1 fw-bold" id="resumenPorcentaje">{{ resumen.porcentaje }}%</div>
+                    <div class="progress mt-3" style="height: 30px;">
+                        <div class="progress-bar bg-success" id="barraResumen" style="width: {{ resumen.porcentaje }}%">{{ resumen.porcentaje }}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const csrfToken = '{{ csrf_token }}';
+
+function guardarEstado(evaluacionId, estado) {
+    fetch('{% url "evaluacion:api_guardar_criterio" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+            evaluacion_id: evaluacionId,
+            campo: 'estado',
+            valor: estado
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar color de fila
+            const row = document.querySelector(`tr[data-evaluacion-id="${evaluacionId}"]`);
+            row.className = 'criterio-row estado-' + estado;
+            actualizarResumen();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function abrirComentarios(evaluacionId, criterioNumero) {
+    document.getElementById('evaluacionIdComentario').value = evaluacionId;
+    document.getElementById('criterioNumero').textContent = criterioNumero;
+
+    // Obtener estado actual para mostrar/ocultar justificacion NA
+    const select = document.querySelector(`select[data-evaluacion="${evaluacionId}"]`);
+    const estado = select.value;
+    document.getElementById('justificacionNAContainer').style.display = estado === 'NA' ? 'block' : 'none';
+
+    const modal = new bootstrap.Modal(document.getElementById('modalComentarios'));
+    modal.show();
+}
+
+function guardarComentarios() {
+    const evaluacionId = document.getElementById('evaluacionIdComentario').value;
+    const comentarios = document.getElementById('comentariosTexto').value;
+    const justificacionNA = document.getElementById('justificacionNA').value;
+
+    // Guardar comentarios
+    fetch('{% url "evaluacion:api_guardar_criterio" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        },
+        body: JSON.stringify({
+            evaluacion_id: evaluacionId,
+            campo: 'comentarios',
+            valor: comentarios
+        })
+    });
+
+    // Guardar justificacion NA si aplica
+    if (justificacionNA) {
+        fetch('{% url "evaluacion:api_guardar_criterio" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                evaluacion_id: evaluacionId,
+                campo: 'justificacion_na',
+                valor: justificacionNA
+            })
+        });
+    }
+
+    bootstrap.Modal.getInstance(document.getElementById('modalComentarios')).hide();
+}
+
+function actualizarResumen() {
+    // Contar estados actuales
+    let cumple = 0, noCumple = 0, noAplica = 0, pendiente = 0;
+
+    document.querySelectorAll('.estado-select').forEach(select => {
+        switch(select.value) {
+            case 'C': cumple++; break;
+            case 'NC': noCumple++; break;
+            case 'NA': noAplica++; break;
+            case 'P': pendiente++; break;
+        }
+    });
+
+    const total = cumple + noCumple + noAplica + pendiente;
+    const criteriosAplican = total - noAplica;
+    const porcentaje = criteriosAplican > 0 ? Math.round((cumple / criteriosAplican) * 100) : 0;
+
+    // Actualizar resumen en la pagina
+    document.getElementById('resumenCumple').textContent = cumple;
+    document.getElementById('resumenNoCumple').textContent = noCumple;
+    document.getElementById('resumenNA').textContent = noAplica;
+    document.getElementById('resumenPendiente').textContent = pendiente;
+    document.getElementById('resumenPorcentaje').textContent = porcentaje + '%';
+    document.getElementById('barraResumen').style.width = porcentaje + '%';
+    document.getElementById('barraResumen').textContent = porcentaje + '%';
+}
+
+function mostrarResumen() {
+    actualizarResumen();
+    const modal = new bootstrap.Modal(document.getElementById('modalResumen'));
+    modal.show();
+}
+</script>
+{% endblock %}

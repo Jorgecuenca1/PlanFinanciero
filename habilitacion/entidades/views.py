@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from .models import EntidadPrestadora, Sede, ServicioHabilitado, DocumentoEntidad, TipoPrestador, Departamento, Municipio, ConfiguracionEvaluacion
+from .models import EntidadPrestadora, Sede, ServicioHabilitado, DocumentoEntidad, TipoPrestador, Departamento, Municipio, ConfiguracionEvaluacionSede
 from estandares.models import Servicio, GrupoEstandar
 from usuarios.models import Usuario
 import secrets
@@ -154,10 +154,37 @@ def lista_sedes(request, pk):
 def crear_sede(request, entidad_pk):
     """Crear nueva sede"""
     entidad = get_object_or_404(EntidadPrestadora, pk=entidad_pk)
+    departamentos = Departamento.objects.all()
+    municipios = Municipio.objects.all()
+
+    if request.method == 'POST':
+        try:
+            municipio_id = request.POST.get('municipio')
+            municipio = Municipio.objects.get(pk=municipio_id) if municipio_id else None
+
+            sede = Sede.objects.create(
+                entidad=entidad,
+                nombre=request.POST.get('nombre'),
+                codigo_reps_sede=request.POST.get('codigo_reps', ''),
+                departamento=municipio.departamento if municipio else entidad.departamento,
+                municipio=municipio or entidad.municipio,
+                direccion=request.POST.get('direccion', ''),
+                telefono=request.POST.get('telefono', ''),
+                email=request.POST.get('email', ''),
+                activa='activo' in request.POST,
+            )
+            # Crear configuración obligatoria (grupo 11.1)
+            ConfiguracionEvaluacionSede.crear_configuracion_obligatoria(sede, request.user)
+            messages.success(request, f'Sede "{sede.nombre}" creada exitosamente.')
+            return redirect('entidades:detalle', pk=entidad.pk)
+        except Exception as e:
+            messages.error(request, f'Error al crear la sede: {str(e)}')
 
     return render(request, 'entidades/sedes/form.html', {
         'titulo': 'Crear Sede',
         'entidad': entidad,
+        'departamentos': departamentos,
+        'municipios': municipios,
     })
 
 
@@ -177,10 +204,34 @@ def detalle_sede(request, pk):
 def editar_sede(request, pk):
     """Editar sede existente"""
     sede = get_object_or_404(Sede, pk=pk)
+    departamentos = Departamento.objects.all()
+    municipios = Municipio.objects.all()
+
+    if request.method == 'POST':
+        try:
+            municipio_id = request.POST.get('municipio')
+            municipio = Municipio.objects.get(pk=municipio_id) if municipio_id else None
+
+            sede.nombre = request.POST.get('nombre')
+            sede.codigo_reps_sede = request.POST.get('codigo_reps', '')
+            if municipio:
+                sede.departamento = municipio.departamento
+                sede.municipio = municipio
+            sede.direccion = request.POST.get('direccion', '')
+            sede.telefono = request.POST.get('telefono', '')
+            sede.email = request.POST.get('email', '')
+            sede.activa = 'activo' in request.POST
+            sede.save()
+            messages.success(request, f'Sede "{sede.nombre}" actualizada exitosamente.')
+            return redirect('entidades:detalle', pk=sede.entidad.pk)
+        except Exception as e:
+            messages.error(request, f'Error al actualizar la sede: {str(e)}')
 
     return render(request, 'entidades/sedes/form.html', {
         'titulo': 'Editar Sede',
         'sede': sede,
+        'departamentos': departamentos,
+        'municipios': municipios,
     })
 
 
@@ -270,22 +321,28 @@ def crear_entidad_con_usuario(request):
                 activo=True
             )
 
-            # Crear configuraciones de servicios obligatorios (grupo 11.1)
-            servicios_obligatorios = Servicio.objects.filter(es_obligatorio=True)
-            for servicio in servicios_obligatorios:
-                ConfiguracionEvaluacion.objects.create(
-                    entidad=entidad,
-                    servicio=servicio,
-                    activo=True,
-                    activado_por=request.user
-                )
+            # Crear sede principal automaticamente
+            sede_principal = Sede.objects.create(
+                entidad=entidad,
+                nombre='Sede Principal',
+                tipo='PRINCIPAL',
+                departamento=departamento,
+                municipio=municipio,
+                direccion=request.POST.get('direccion'),
+                telefono=request.POST.get('telefono'),
+                email=email,
+                activa=True
+            )
+
+            # Crear configuracion obligatoria (grupo 11.1) para la sede principal
+            ConfiguracionEvaluacionSede.crear_configuracion_obligatoria(sede_principal, request.user)
 
             messages.success(
                 request,
-                f'Entidad "{entidad.razon_social}" creada. '
+                f'Entidad "{entidad.razon_social}" creada con sede principal. '
                 f'Usuario: {email} | Password: {password}'
             )
-            return redirect('entidades:configuracion_servicios', pk=entidad.pk)
+            return redirect('entidades:detalle', pk=entidad.pk)
 
         except Exception as e:
             messages.error(request, f'Error al crear la entidad: {str(e)}')
@@ -300,65 +357,23 @@ def crear_entidad_con_usuario(request):
 
 @login_required
 def configuracion_servicios(request, pk):
-    """Configurar servicios de evaluacion para una entidad"""
+    """
+    Redirige a la configuracion por sede.
+    La configuracion de grupos de criterios ahora se hace por SEDE, no por entidad.
+    """
     entidad = get_object_or_404(EntidadPrestadora, pk=pk)
 
     if request.user.rol != 'SUPER' and request.user.entidad_id != pk:
         messages.error(request, 'No tiene permisos para esta accion.')
         return redirect('entidades:lista')
 
-    # Obtener grupos de estandares
-    grupos = GrupoEstandar.objects.filter(activo=True).prefetch_related('servicios')
+    # Redirigir a la lista de sedes para que el usuario seleccione cual configurar
+    sedes = entidad.sedes.filter(activa=True)
 
-    # Obtener configuraciones actuales
-    configuraciones_actuales = {
-        c.servicio_id: c
-        for c in ConfiguracionEvaluacion.objects.filter(entidad=entidad)
-    }
+    if sedes.count() == 1:
+        # Si solo hay una sede, redirigir directamente a su configuracion
+        return redirect('evaluacion:sede_configuracion', sede_pk=sedes.first().pk)
 
-    # Separar servicios obligatorios y opcionales
-    servicios_obligatorios = []
-    servicios_opcionales = []
-
-    for grupo in grupos:
-        for servicio in grupo.servicios.filter(activo=True):
-            config = configuraciones_actuales.get(servicio.id)
-            item = {
-                'servicio': servicio,
-                'grupo': grupo,
-                'configuracion': config,
-                'activo': config.activo if config else False
-            }
-            if servicio.es_obligatorio:
-                servicios_obligatorios.append(item)
-            else:
-                servicios_opcionales.append(item)
-
-    if request.method == 'POST':
-        # Procesar servicios opcionales seleccionados
-        servicios_seleccionados = request.POST.getlist('servicios')
-
-        for servicio in Servicio.objects.filter(activo=True, es_obligatorio=False):
-            servicio_id_str = str(servicio.id)
-            config, created = ConfiguracionEvaluacion.objects.get_or_create(
-                entidad=entidad,
-                servicio=servicio,
-                defaults={'activado_por': request.user}
-            )
-
-            if servicio_id_str in servicios_seleccionados:
-                config.activo = True
-            else:
-                config.activo = False
-            config.save()
-
-        messages.success(request, 'Configuracion de servicios actualizada.')
-        return redirect('entidades:detalle', pk=pk)
-
-    return render(request, 'entidades/configuracion_servicios.html', {
-        'titulo': f'Configurar Servicios - {entidad.razon_social}',
-        'entidad': entidad,
-        'servicios_obligatorios': servicios_obligatorios,
-        'servicios_opcionales': servicios_opcionales,
-        'grupos': grupos,
-    })
+    # Si hay varias sedes, mostrar lista para seleccionar
+    messages.info(request, 'Seleccione una sede para configurar los grupos de criterios a evaluar.')
+    return redirect('entidades:sedes', pk=pk)

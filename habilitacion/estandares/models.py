@@ -186,6 +186,14 @@ class Criterio(models.Model):
     Criterios específicos de evaluación.
     Cada estándar tiene múltiples criterios que deben cumplirse.
     """
+
+    TIPOS_CRITERIO = [
+        ('CRITERIO', 'Criterio Evaluable'),
+        ('TITULO', 'Título de Sección'),
+        ('SUBTITULO', 'Subtítulo'),
+        ('NOTA', 'Nota o Aclaración'),
+    ]
+
     # Puede pertenecer a un estándar general o a un estándar de servicio
     estandar = models.ForeignKey(
         Estandar,
@@ -206,6 +214,14 @@ class Criterio(models.Model):
 
     numero = models.CharField('Número', max_length=20, help_text='Numeración del criterio (ej: 1, 1.1, 1.1.1)')
     texto = models.TextField('Texto del criterio')
+
+    tipo_criterio = models.CharField(
+        'Tipo',
+        max_length=20,
+        choices=TIPOS_CRITERIO,
+        default='CRITERIO',
+        help_text='Indica si es un criterio evaluable, título o subtítulo'
+    )
     es_titulo = models.BooleanField(
         'Es título/sección',
         default=False,
@@ -243,6 +259,11 @@ class Criterio(models.Model):
     def estandar_padre(self):
         """Retorna el estándar al que pertenece (general o de servicio)"""
         return self.estandar or self.estandar_servicio
+
+    @property
+    def es_evaluable(self):
+        """Indica si el criterio requiere evaluación (C/NC/NA)"""
+        return self.tipo_criterio == 'CRITERIO' and not self.es_titulo
 
 
 class PlantillaDocumento(models.Model):

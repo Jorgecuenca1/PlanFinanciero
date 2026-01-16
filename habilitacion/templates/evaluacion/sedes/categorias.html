@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:sedes_evaluar' %}">Sedes</a></li>
+<li class="breadcrumb-item active">{{ sede.nombre }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h2><i class="bi bi-folder2-open"></i> {{ titulo }}</h2>
+                <p class="text-muted mb-0">Seleccione una categoria de criterios para evaluar</p>
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'evaluacion:sede_configuracion' sede_pk=sede.pk %}" class="btn btn-outline-primary">
+                    <i class="bi bi-gear"></i> Configurar Grupos
+                </a>
+                <a href="{% url 'evaluacion:sede_resumen' sede_pk=sede.pk %}" class="btn btn-outline-success">
+                    <i class="bi bi-bar-chart"></i> Ver Resumen
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumen General -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-3 text-center border-end">
+                        <h3 class="text-primary mb-0">{{ resumen.porcentaje }}%</h3>
+                        <small class="text-muted">Cumplimiento General</small>
+                    </div>
+                    <div class="col-md-9">
+                        <div class="row text-center">
+                            <div class="col">
+                                <span class="badge bg-success fs-6">{{ resumen.cumple }}</span>
+                                <small class="d-block text-muted">Cumple</small>
+                            </div>
+                            <div class="col">
+                                <span class="badge bg-danger fs-6">{{ resumen.no_cumple }}</span>
+                                <small class="d-block text-muted">No Cumple</small>
+                            </div>
+                            <div class="col">
+                                <span class="badge bg-secondary fs-6">{{ resumen.no_aplica }}</span>
+                                <small class="d-block text-muted">No Aplica</small>
+                            </div>
+                            <div class="col">
+                                <span class="badge bg-warning text-dark fs-6">{{ resumen.pendiente }}</span>
+                                <small class="d-block text-muted">Pendiente</small>
+                            </div>
+                            <div class="col">
+                                <span class="badge bg-primary fs-6">{{ resumen.total_criterios }}</span>
+                                <small class="d-block text-muted">Total</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categorias (Grupos de Estandares) -->
+<div class="row">
+    {% for item in categorias_data %}
+    <div class="col-12 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0">
+                        <i class="bi bi-folder{% if item.es_obligatorio %}-fill text-warning{% endif %}"></i>
+                        {{ item.grupo.codigo }} - {{ item.grupo.nombre }}
+                    </h5>
+                    {% if item.es_obligatorio %}
+                    <span class="badge bg-warning text-dark">Obligatorio</span>
+                    {% endif %}
+                </div>
+                <div class="text-end">
+                    <span class="h4 mb-0 {% if item.porcentaje >= 80 %}text-success{% elif item.porcentaje >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ item.porcentaje }}%
+                    </span>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Barra de progreso -->
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar bg-success" style="width: {% widthratio item.cumple item.total_criterios 100 %}%"></div>
+                    <div class="progress-bar bg-danger" style="width: {% widthratio item.no_cumple item.total_criterios 100 %}%"></div>
+                    <div class="progress-bar bg-secondary" style="width: {% widthratio item.no_aplica item.total_criterios 100 %}%"></div>
+                </div>
+
+                <!-- Estadisticas -->
+                <div class="row mb-3">
+                    <div class="col-auto">
+                        <span class="badge bg-success">C: {{ item.cumple }}</span>
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge bg-danger">NC: {{ item.no_cumple }}</span>
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge bg-secondary">N/A: {{ item.no_aplica }}</span>
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge bg-warning text-dark">Pend: {{ item.pendiente }}</span>
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge bg-primary">Total: {{ item.total_criterios }}</span>
+                    </div>
+                </div>
+
+                <!-- Subcategorias (Estandares) -->
+                <div class="list-group list-group-flush">
+                    {% for estandar in item.estandares %}
+                    <a href="{% url 'evaluacion:sede_criterios' sede_pk=sede.pk estandar_pk=estandar.pk %}"
+                       class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span>
+                            <i class="bi bi-file-text"></i>
+                            {{ estandar.codigo }} - {{ estandar.nombre }}
+                        </span>
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{% url 'evaluacion:sede_subcategorias' sede_pk=sede.pk grupo_pk=item.grupo.pk %}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-grid-3x3"></i> Ver todos los estandares
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> No hay grupos de criterios habilitados.
+            <a href="{% url 'evaluacion:sede_configuracion' sede_pk=sede.pk %}" class="alert-link">Configurar grupos</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <a href="{% url 'evaluacion:sedes_evaluar' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Volver a Sedes
+        </a>
+    </div>
+</div>
+{% endblock %}

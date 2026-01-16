@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:sedes_evaluar' %}">Sedes</a></li>
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:sede_categorias' sede_pk=sede.pk %}">{{ sede.nombre }}</a></li>
+<li class="breadcrumb-item active">{{ grupo.codigo }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h2>
+                    <i class="bi bi-folder2-open"></i> {{ grupo.codigo }} - {{ grupo.nombre }}
+                </h2>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-geo-alt"></i> {{ sede.nombre }}
+                    {% if es_obligatorio %}
+                    <span class="badge bg-warning text-dark ms-2">Grupo Obligatorio</span>
+                    {% endif %}
+                </p>
+            </div>
+            <a href="{% url 'evaluacion:sede_categorias' sede_pk=sede.pk %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de Subcategorias (Estandares) -->
+<div class="row">
+    {% for item in subcategorias_data %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">{{ item.estandar.codigo }}</h6>
+                <small class="text-muted">{{ item.estandar.nombre }}</small>
+            </div>
+            <div class="card-body">
+                <!-- Barra de progreso -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-muted">Progreso</small>
+                        <small class="fw-bold {% if item.porcentaje >= 80 %}text-success{% elif item.porcentaje >= 50 %}text-warning{% else %}text-danger{% endif %}">{{ item.porcentaje }}%</small>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: {% widthratio item.cumple item.total_criterios 100 %}%"></div>
+                        <div class="progress-bar bg-danger" style="width: {% widthratio item.no_cumple item.total_criterios 100 %}%"></div>
+                        <div class="progress-bar bg-secondary" style="width: {% widthratio item.no_aplica item.total_criterios 100 %}%"></div>
+                    </div>
+                </div>
+
+                <!-- Estadisticas -->
+                <div class="row text-center small">
+                    <div class="col">
+                        <span class="badge bg-success">{{ item.cumple }}</span>
+                        <div class="text-muted">C</div>
+                    </div>
+                    <div class="col">
+                        <span class="badge bg-danger">{{ item.no_cumple }}</span>
+                        <div class="text-muted">NC</div>
+                    </div>
+                    <div class="col">
+                        <span class="badge bg-secondary">{{ item.no_aplica }}</span>
+                        <div class="text-muted">N/A</div>
+                    </div>
+                    <div class="col">
+                        <span class="badge bg-warning text-dark">{{ item.pendiente }}</span>
+                        <div class="text-muted">Pend</div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-2">
+                    <small class="text-muted">{{ item.total_criterios }} criterios</small>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <a href="{% url 'evaluacion:sede_criterios' sede_pk=sede.pk estandar_pk=item.estandar.pk %}"
+                   class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-list-check"></i> Evaluar Criterios
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No hay estandares definidos en este grupo.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

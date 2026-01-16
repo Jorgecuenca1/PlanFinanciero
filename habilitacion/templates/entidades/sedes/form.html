@@ -4,7 +4,9 @@
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'entidades:lista' %}">Entidades</a></li>
-{% if entidad %}
+{% if sede %}
+<li class="breadcrumb-item"><a href="{% url 'entidades:detalle' sede.entidad.pk %}">{{ sede.entidad.razon_social }}</a></li>
+{% elif entidad %}
 <li class="breadcrumb-item"><a href="{% url 'entidades:detalle' entidad.pk %}">{{ entidad.razon_social }}</a></li>
 {% endif %}
 <li class="breadcrumb-item active">{% if sede %}Editar{% else %}Nueva{% endif %} Sede</li>
@@ -32,7 +34,7 @@
                 </div>
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Código REPS</label>
-                    <input type="text" name="codigo_reps" class="form-control" value="{{ sede.codigo_reps|default:'' }}">
+                    <input type="text" name="codigo_reps" class="form-control" value="{{ sede.codigo_reps_sede|default:'' }}">
                 </div>
             </div>
             <div class="row">
@@ -70,13 +72,13 @@
                 </div>
             </div>
             <div class="mb-3 form-check">
-                <input type="checkbox" name="activo" class="form-check-input" id="activo" {% if sede.activo %}checked{% endif %} {% if not sede %}checked{% endif %}>
+                <input type="checkbox" name="activo" class="form-check-input" id="activo" {% if sede.activa %}checked{% endif %} {% if not sede %}checked{% endif %}>
                 <label class="form-check-label" for="activo">Sede activa</label>
             </div>
             <button type="submit" class="btn btn-primary">
                 <i class="bi bi-check-lg me-1"></i>Guardar
             </button>
-            <a href="{% if entidad %}{% url 'entidades:detalle' entidad.pk %}{% else %}{% url 'entidades:sedes' %}{% endif %}" class="btn btn-outline-secondary">
+            <a href="{% if sede %}{% url 'entidades:detalle' sede.entidad.pk %}{% elif entidad %}{% url 'entidades:detalle' entidad.pk %}{% else %}{% url 'entidades:lista' %}{% endif %}" class="btn btn-outline-secondary">
                 Cancelar
             </a>
         </form>

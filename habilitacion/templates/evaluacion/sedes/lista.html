@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Sedes a Evaluar</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="bi bi-building-check"></i> {{ titulo }}</h2>
+            <span class="badge bg-primary fs-6">{{ entidad.razon_social }}</span>
+        </div>
+        <p class="text-muted">Seleccione una sede para iniciar o continuar la evaluacion de criterios de habilitacion.</p>
+    </div>
+</div>
+
+{% if sedes_data %}
+<div class="row">
+    {% for item in sedes_data %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-geo-alt text-primary"></i> {{ item.sede.nombre }}
+                </h5>
+                <span class="badge {% if item.sede.tipo == 'PRINCIPAL' %}bg-success{% else %}bg-secondary{% endif %}">
+                    {{ item.sede.get_tipo_display }}
+                </span>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    <i class="bi bi-pin-map"></i> {{ item.sede.direccion }}, {{ item.sede.municipio.nombre }}
+                </p>
+
+                <!-- Barra de progreso -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-muted">Progreso de evaluacion</small>
+                        <small class="fw-bold">{{ item.porcentaje }}%</small>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ item.porcentaje }}%"></div>
+                    </div>
+                </div>
+
+                <!-- Estadisticas -->
+                <div class="row text-center mb-3">
+                    <div class="col-3">
+                        <div class="border rounded p-2">
+                            <span class="badge bg-success d-block mb-1">{{ item.cumple }}</span>
+                            <small class="text-muted">C</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="border rounded p-2">
+                            <span class="badge bg-danger d-block mb-1">{{ item.no_cumple }}</span>
+                            <small class="text-muted">NC</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="border rounded p-2">
+                            <span class="badge bg-secondary d-block mb-1">{{ item.no_aplica }}</span>
+                            <small class="text-muted">N/A</small>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="border rounded p-2">
+                            <span class="badge bg-warning text-dark d-block mb-1">{{ item.total_criterios|add:item.cumple|add:"-"|add:item.no_cumple|add:"-"|add:item.no_aplica }}</span>
+                            <small class="text-muted">Pend</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="small text-muted mb-3">
+                    <i class="bi bi-folder2"></i> {{ item.grupos_habilitados }} grupo(s) habilitado(s)
+                </div>
+            </div>
+            <div class="card-footer bg-white border-top-0">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'evaluacion:sede_categorias' sede_pk=item.sede.pk %}" class="btn btn-primary">
+                        <i class="bi bi-play-fill"></i> Evaluar
+                    </a>
+                    <div class="btn-group">
+                        <a href="{% url 'evaluacion:sede_configuracion' sede_pk=item.sede.pk %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-gear"></i> Configurar
+                        </a>
+                        <a href="{% url 'evaluacion:sede_resumen' sede_pk=item.sede.pk %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-bar-chart"></i> Resumen
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> No hay sedes registradas para esta entidad.
+    <a href="{% url 'entidades:sedes' pk=entidad.pk %}" class="alert-link">Agregar sedes</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:sedes_evaluar' %}">Sedes</a></li>
+<li class="breadcrumb-item"><a href="{% url 'evaluacion:sede_categorias' sede_pk=sede.pk %}">{{ sede.nombre }}</a></li>
+<li class="breadcrumb-item active">Resumen</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h2><i class="bi bi-bar-chart-fill"></i> {{ titulo }}</h2>
+                <p class="text-muted mb-0">
+                    Resumen del estado de evaluacion de criterios de habilitacion.
+                    <strong>Nota:</strong> El porcentaje se calcula sobre criterios que aplican (excluyendo N/A).
+                </p>
+            </div>
+            <div class="btn-group">
+                <a href="{% url 'evaluacion:sede_categorias' sede_pk=sede.pk %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver a Evaluar
+                </a>
+                <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                    <i class="bi bi-printer"></i> Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumen General -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body text-center">
+                <h1 class="display-4">{{ totales.cumple }}</h1>
+                <h5>Cumple</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white h-100">
+            <div class="card-body text-center">
+                <h1 class="display-4">{{ totales.no_cumple }}</h1>
+                <h5>No Cumple</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-secondary text-white h-100">
+            <div class="card-body text-center">
+                <h1 class="display-4">{{ totales.no_aplica }}</h1>
+                <h5>No Aplica</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning h-100">
+            <div class="card-body text-center">
+                <h1 class="display-4">{{ totales.pendiente }}</h1>
+                <h5>Pendiente</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Porcentaje General -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-4 text-center border-end">
+                        <h1 class="display-2 {% if totales.porcentaje >= 80 %}text-success{% elif totales.porcentaje >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                            {{ totales.porcentaje }}%
+                        </h1>
+                        <h5 class="text-muted">Cumplimiento General</h5>
+                    </div>
+                    <div class="col-md-8">
+                        <h5>Progreso de Evaluacion</h5>
+                        <div class="progress" style="height: 30px;">
+                            <div class="progress-bar bg-success" style="width: {% widthratio totales.cumple totales.criterios 100 %}%">
+                                C: {{ totales.cumple }}
+                            </div>
+                            <div class="progress-bar bg-danger" style="width: {% widthratio totales.no_cumple totales.criterios 100 %}%">
+                                NC: {{ totales.no_cumple }}
+                            </div>
+                            <div class="progress-bar bg-secondary" style="width: {% widthratio totales.no_aplica totales.criterios 100 %}%">
+                                N/A: {{ totales.no_aplica }}
+                            </div>
+                            <div class="progress-bar bg-warning text-dark" style="width: {% widthratio totales.pendiente totales.criterios 100 %}%">
+                                P: {{ totales.pendiente }}
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <p class="mb-1">
+                                <strong>Total de criterios:</strong> {{ totales.criterios }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Criterios que aplican:</strong> {{ totales.criterios|add:"-"|add:totales.no_aplica }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Resumen por Grupo -->
+<div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-list-ul"></i> Detalle por Grupo de Criterios</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Grupo</th>
+                    <th class="text-center">Total</th>
+                    <th class="text-center">Cumple</th>
+                    <th class="text-center">No Cumple</th>
+                    <th class="text-center">N/A</th>
+                    <th class="text-center">Pendiente</th>
+                    <th class="text-center">% Cumplimiento</th>
+                    <th style="width: 200px;">Progreso</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in resumen_grupos %}
+                <tr>
+                    <td>
+                        <strong>{{ item.grupo.codigo }}</strong><br>
+                        <small class="text-muted">{{ item.grupo.nombre }}</small>
+                    </td>
+                    <td class="text-center">{{ item.total }}</td>
+                    <td class="text-center"><span class="badge bg-success">{{ item.cumple }}</span></td>
+                    <td class="text-center"><span class="badge bg-danger">{{ item.no_cumple }}</span></td>
+                    <td class="text-center"><span class="badge bg-secondary">{{ item.no_aplica }}</span></td>
+                    <td class="text-center"><span class="badge bg-warning text-dark">{{ item.pendiente }}</span></td>
+                    <td class="text-center">
+                        <strong class="{% if item.porcentaje >= 80 %}text-success{% elif item.porcentaje >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                            {{ item.porcentaje }}%
+                        </strong>
+                    </td>
+                    <td>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-success" style="width: {% widthratio item.cumple item.total 100 %}%"></div>
+                            <div class="progress-bar bg-danger" style="width: {% widthratio item.no_cumple item.total 100 %}%"></div>
+                            <div class="progress-bar bg-secondary" style="width: {% widthratio item.no_aplica item.total 100 %}%"></div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-dark">
+                <tr>
+                    <th>TOTAL</th>
+                    <th class="text-center">{{ totales.criterios }}</th>
+                    <th class="text-center">{{ totales.cumple }}</th>
+                    <th class="text-center">{{ totales.no_cumple }}</th>
+                    <th class="text-center">{{ totales.no_aplica }}</th>
+                    <th class="text-center">{{ totales.pendiente }}</th>
+                    <th class="text-center">{{ totales.porcentaje }}%</th>
+                    <th></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<!-- Leyenda -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h6><i class="bi bi-info-circle"></i> Leyenda</h6>
+                <div class="row">
+                    <div class="col-auto">
+                        <span class="badge bg-success">C</span> = Cumple
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge bg-danger">NC</span> = No Cumple
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge bg-secondary">N/A</span> = No Aplica
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge bg-warning text-dark">P</span> = Pendiente
+                    </div>
+                </div>
+                <p class="mt-2 mb-0 small text-muted">
+                    El porcentaje de cumplimiento se calcula dividiendo los criterios que cumplen entre los criterios que aplican
+                    (excluyendo los marcados como N/A).
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
