@@ -22,7 +22,7 @@
             <a href="{% url 'entidades:editar_sede' sede.pk %}" class="btn btn-primary">
                 <i class="bi bi-pencil"></i> Editar
             </a>
-            <a href="{% url 'evaluacion:sede' sede.pk %}" class="btn btn-success">
+            <a href="{% url 'evaluacion:sede_categorias' sede_pk=sede.pk %}" class="btn btn-success">
                 <i class="bi bi-clipboard-check"></i> Evaluar
             </a>
         </div>
