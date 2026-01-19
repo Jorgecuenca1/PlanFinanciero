@@ -2,6 +2,52 @@
 
 {% block title %}{{ titulo }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Estilos para preview de documentos */
+    #previewContainer .word-content {
+        padding: 20px;
+        background: white;
+        max-height: 70vh;
+        overflow-y: auto;
+        text-align: left;
+    }
+    #previewContainer .word-content img {
+        max-width: 100%;
+    }
+    #previewContainer .excel-content {
+        padding: 10px;
+        max-height: 70vh;
+        overflow: auto;
+    }
+    #previewContainer .excel-content table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 12px;
+    }
+    #previewContainer .excel-content th,
+    #previewContainer .excel-content td {
+        border: 1px solid #dee2e6;
+        padding: 4px 8px;
+        text-align: left;
+    }
+    #previewContainer .excel-content th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+    #previewContainer .excel-content tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    .preview-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 50vh;
+    }
+</style>
+{% endblock %}
+
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'evaluacion:sedes_evaluar' %}">Sedes</a></li>
 <li class="breadcrumb-item"><a href="{% url 'evaluacion:sede_categorias' sede_pk=sede.pk %}">{{ sede.nombre }}</a></li>
@@ -55,7 +101,8 @@
     </div>
 </div>
 
-<!-- Subir Documento -->
+<!-- Subir Documento (solo para usuarios que pueden editar) -->
+{% if not user.solo_lectura %}
 <div class="card mb-4">
     <div class="card-header bg-primary text-white">
         <h6 class="mb-0"><i class="bi bi-upload"></i> Subir Documento</h6>
@@ -86,6 +133,12 @@
         </form>
     </div>
 </div>
+{% else %}
+<div class="alert alert-info mb-4">
+    <i class="bi bi-info-circle"></i> <strong>Modo solo lectura:</strong>
+    Como auditor, puede visualizar los documentos en linea pero no descargarlos ni modificarlos.
+</div>
+{% endif %}
 
 <!-- Lista de Documentos -->
 <div class="card">
@@ -115,15 +168,33 @@
                         <i class="bi bi-file-image text-success"></i>
                         {% elif archivo.es_pdf %}
                         <i class="bi bi-file-pdf text-danger"></i>
+                        {% elif archivo.es_word %}
+                        <i class="bi bi-file-earmark-word text-primary"></i>
+                        {% elif archivo.es_excel %}
+                        <i class="bi bi-file-earmark-excel text-success"></i>
                         {% else %}
                         <i class="bi bi-file-earmark"></i>
                         {% endif %}
+                        {% if user.solo_lectura %}
+                        <span class="text-dark fw-medium">{{ archivo.nombre }}</span>
+                        {% if archivo.es_previsualizable %}
+                        <span class="badge bg-info ms-1"><i class="bi bi-eye"></i> Vista previa</span>
+                        {% endif %}
+                        {% else %}
                         <a href="{{ archivo.archivo.url }}" target="_blank">{{ archivo.nombre }}</a>
+                        {% endif %}
                     </td>
                     <td class="text-muted small">{{ archivo.descripcion|default:"-" }}</td>
                     <td class="small">{{ archivo.fecha_subida|date:"d/m/Y H:i" }}</td>
                     <td class="small">{{ archivo.subido_por.nombre_completo|default:archivo.subido_por.email }}</td>
                     <td>
+                        {% if user.solo_lectura %}
+                        <button type="button" class="btn btn-sm btn-outline-info"
+                                onclick="previsualizarArchivo({{ archivo.pk }}, '{{ archivo.nombre }}', '{{ archivo.tipo_archivo }}')"
+                                title="Ver documento">
+                            <i class="bi bi-eye"></i> Ver
+                        </button>
+                        {% else %}
                         <div class="btn-group btn-group-sm">
                             <a href="{{ archivo.archivo.url }}" class="btn btn-outline-primary" target="_blank"
                                title="Descargar">
@@ -134,6 +205,7 @@
                                 <i class="bi bi-trash"></i>
                             </button>
                         </div>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -147,13 +219,226 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Modal de Previsualizacion -->
+<div class="modal fade" id="modalPreview" tabindex="-1" aria-labelledby="modalPreviewLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalPreviewLabel">
+                    <i class="bi bi-eye"></i> <span id="previewNombreArchivo">Documento</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-0" style="min-height: 70vh;">
+                <div id="previewContainer" class="h-100 w-100">
+                    <!-- El contenido se carga dinamicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span class="text-muted me-auto">
+                    <i class="bi bi-shield-lock"></i> Modo solo lectura - No se permite descargar
+                </span>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
+<!-- Libreria para previsualizar Word (.docx) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<!-- Libreria para previsualizar Excel (.xlsx) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script>
 const csrfToken = '{{ csrf_token }}';
 
-document.getElementById('formSubirArchivo').addEventListener('submit', function(e) {
+// Funcion para previsualizar archivos (auditor)
+function previsualizarArchivo(archivoId, nombre, tipo) {
+    const container = document.getElementById('previewContainer');
+    document.getElementById('previewNombreArchivo').textContent = nombre;
+
+    // URL de preview que sirve el archivo con headers correctos
+    const previewUrl = `/evaluacion/preview-archivo/${archivoId}/`;
+
+    let contenido = '';
+
+    switch(tipo) {
+        case 'pdf':
+            // PDFs se muestran en iframe con toolbar deshabilitado
+            contenido = `
+                <iframe src="${previewUrl}#toolbar=0&navpanes=0&scrollbar=1"
+                        style="width: 100%; height: 70vh; border: none;"
+                        title="${nombre}">
+                </iframe>
+            `;
+            break;
+
+        case 'imagen':
+            // Imagenes se muestran directamente
+            contenido = `
+                <div class="text-center p-3" style="max-height: 70vh; overflow: auto;">
+                    <img src="${previewUrl}" alt="${nombre}" class="img-fluid"
+                         style="max-height: 65vh;"
+                         oncontextmenu="return false;">
+                </div>
+            `;
+            break;
+
+        case 'word':
+            // Word - usar mammoth.js para convertir a HTML
+            contenido = `
+                <div class="preview-loading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-3">Cargando documento Word...</p>
+                </div>
+            `;
+            container.innerHTML = contenido;
+
+            // Cargar y convertir el documento Word
+            fetch(previewUrl)
+                .then(response => response.arrayBuffer())
+                .then(arrayBuffer => {
+                    return mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+                })
+                .then(result => {
+                    container.innerHTML = `
+                        <div class="word-content" oncontextmenu="return false;">
+                            ${result.value}
+                        </div>
+                    `;
+                    if (result.messages.length > 0) {
+                        console.log('Mammoth messages:', result.messages);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar Word:', error);
+                    container.innerHTML = `
+                        <div class="text-center p-5">
+                            <i class="bi bi-exclamation-triangle display-1 text-warning"></i>
+                            <h4 class="mt-3">No se pudo cargar el documento</h4>
+                            <p class="text-muted">
+                                Solo se soportan archivos .docx (Word 2007+).<br>
+                                Los archivos .doc antiguos no son compatibles.
+                            </p>
+                        </div>
+                    `;
+                });
+
+            // Mostrar modal inmediatamente con loading
+            const modalWord = new bootstrap.Modal(document.getElementById('modalPreview'));
+            modalWord.show();
+            return; // Salir porque ya mostramos el modal
+
+        case 'excel':
+            // Excel - usar SheetJS para renderizar como tabla HTML
+            contenido = `
+                <div class="preview-loading">
+                    <div class="spinner-border text-success" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-3">Cargando documento Excel...</p>
+                </div>
+            `;
+            container.innerHTML = contenido;
+
+            // Cargar y convertir el documento Excel
+            fetch(previewUrl)
+                .then(response => response.arrayBuffer())
+                .then(arrayBuffer => {
+                    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+                    // Generar tabs para cada hoja
+                    let tabsHtml = '<ul class="nav nav-tabs mb-2" role="tablist">';
+                    let contentHtml = '<div class="tab-content">';
+
+                    workbook.SheetNames.forEach((sheetName, index) => {
+                        const isActive = index === 0 ? 'active' : '';
+                        const tabId = 'sheet-' + index;
+
+                        tabsHtml += `
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link ${isActive}" data-bs-toggle="tab"
+                                        data-bs-target="#${tabId}" type="button">
+                                    ${sheetName}
+                                </button>
+                            </li>
+                        `;
+
+                        const worksheet = workbook.Sheets[sheetName];
+                        const html = XLSX.utils.sheet_to_html(worksheet, { editable: false });
+
+                        contentHtml += `
+                            <div class="tab-pane fade ${index === 0 ? 'show active' : ''}"
+                                 id="${tabId}" role="tabpanel">
+                                <div class="excel-content" oncontextmenu="return false;">
+                                    ${html}
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    tabsHtml += '</ul>';
+                    contentHtml += '</div>';
+
+                    container.innerHTML = tabsHtml + contentHtml;
+                })
+                .catch(error => {
+                    console.error('Error al cargar Excel:', error);
+                    container.innerHTML = `
+                        <div class="text-center p-5">
+                            <i class="bi bi-exclamation-triangle display-1 text-warning"></i>
+                            <h4 class="mt-3">No se pudo cargar el documento</h4>
+                            <p class="text-muted">
+                                Solo se soportan archivos .xlsx (Excel 2007+).<br>
+                                Los archivos .xls antiguos pueden tener problemas.
+                            </p>
+                        </div>
+                    `;
+                });
+
+            // Mostrar modal inmediatamente con loading
+            const modalExcel = new bootstrap.Modal(document.getElementById('modalPreview'));
+            modalExcel.show();
+            return; // Salir porque ya mostramos el modal
+
+        default:
+            contenido = `
+                <div class="text-center p-5">
+                    <i class="bi bi-file-earmark display-1 text-secondary"></i>
+                    <h4 class="mt-3">${nombre}</h4>
+                    <p class="text-muted">
+                        Este tipo de archivo no se puede previsualizar en el navegador.
+                    </p>
+                    <div class="alert alert-info d-inline-block">
+                        <i class="bi bi-info-circle"></i>
+                        El documento existe y esta disponible para usuarios autorizados.
+                    </div>
+                </div>
+            `;
+    }
+
+    container.innerHTML = contenido;
+
+    // Mostrar el modal
+    const modal = new bootstrap.Modal(document.getElementById('modalPreview'));
+    modal.show();
+}
+
+// Deshabilitar clic derecho en el modal de preview (evitar "Guardar imagen como...")
+document.getElementById('modalPreview').addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    return false;
+});
+
+// Solo agregar el listener si el formulario existe (no existe para auditores)
+const formSubir = document.getElementById('formSubirArchivo');
+if (formSubir) {
+    formSubir.addEventListener('submit', function(e) {
     e.preventDefault();
 
     const formData = new FormData(this);
@@ -209,6 +494,7 @@ document.getElementById('formSubirArchivo').addEventListener('submit', function(
         alert('Error al subir el archivo');
     });
 });
+} // Cierra el if (formSubir)
 
 function eliminarArchivo(archivoId) {
     if (!confirm('Esta seguro de eliminar este archivo?')) return;

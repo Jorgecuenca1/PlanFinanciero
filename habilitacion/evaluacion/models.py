@@ -610,3 +610,31 @@ class ArchivoRepositorio(models.Model):
     def es_pdf(self):
         """Indica si el archivo es un PDF"""
         return self.extension == '.pdf'
+
+    @property
+    def es_word(self):
+        """Indica si el archivo es un documento Word"""
+        return self.extension in ['.doc', '.docx']
+
+    @property
+    def es_excel(self):
+        """Indica si el archivo es un documento Excel"""
+        return self.extension in ['.xls', '.xlsx']
+
+    @property
+    def es_previsualizable(self):
+        """Indica si el archivo se puede previsualizar en el navegador"""
+        return self.es_imagen or self.es_pdf or self.es_word or self.es_excel
+
+    @property
+    def tipo_archivo(self):
+        """Retorna el tipo de archivo para el visor"""
+        if self.es_pdf:
+            return 'pdf'
+        elif self.es_imagen:
+            return 'imagen'
+        elif self.es_word:
+            return 'word'
+        elif self.es_excel:
+            return 'excel'
+        return 'otro'

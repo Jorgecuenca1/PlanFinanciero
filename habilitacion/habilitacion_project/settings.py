@@ -38,9 +38,11 @@ CORS_ALLOWED_ORIGINS = [
 
 CSRF_TRUSTED_ORIGINS = [
     "https://finan_poai.corpofuturo.org",
- "https://habilitacion.corpofuturo.org",
-
+    "https://habilitacion.corpofuturo.org",
 ]
+
+# Permitir iframes del mismo origen (necesario para vista previa de documentos)
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 INSTALLED_APPS = [
     "django.contrib.admin",

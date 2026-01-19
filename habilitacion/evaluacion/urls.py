@@ -60,4 +60,7 @@ urlpatterns = [
     path('api/guardar-criterio/', views.guardar_evaluacion_criterio_sede, name='api_guardar_criterio'),
     path('api/subir-archivo/<int:evaluacion_pk>/', views.subir_archivo_criterio_sede, name='api_subir_archivo'),
     path('api/eliminar-archivo/<int:archivo_pk>/', views.eliminar_archivo_criterio_sede, name='api_eliminar_archivo'),
+
+    # ===== PREVIEW DE ARCHIVOS (para auditores) =====
+    path('preview-archivo/<int:archivo_pk>/', views.preview_archivo, name='preview_archivo'),
 ]

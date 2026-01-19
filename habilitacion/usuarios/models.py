@@ -42,6 +42,7 @@ class Usuario(AbstractUser):
     ROLES = [
         ('SUPER', 'Super Administrador'),
         ('ADMIN', 'Administrador de Entidad'),
+        ('AUDITOR', 'Auditor (Solo lectura)'),
         ('CALIDAD', 'Responsable de Calidad'),
         ('EVALUADOR', 'Evaluador'),
         ('APROBADOR', 'Aprobador'),
@@ -126,6 +127,16 @@ class Usuario(AbstractUser):
     def puede_editar(self):
         """Verifica si el usuario puede editar evaluaciones"""
         return self.rol in ['SUPER', 'ADMIN', 'CALIDAD', 'EVALUADOR']
+
+    @property
+    def es_auditor(self):
+        """Verifica si el usuario es auditor (solo lectura)"""
+        return self.rol == 'AUDITOR'
+
+    @property
+    def solo_lectura(self):
+        """Verifica si el usuario tiene acceso de solo lectura"""
+        return self.rol in ['AUDITOR', 'CONSULTOR']
 
     def registrar_acceso(self):
         """Registra el último acceso del usuario"""

@@ -8,8 +8,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse, HttpResponse
 from django.views.decorators.http import require_POST
+from django.views.decorators.clickjacking import xframe_options_sameorigin
+import mimetypes
 from django.db.models import Count, Q
 from .models import Evaluacion, DocumentoEvaluacion, HistorialEvaluacion, ResumenCumplimiento, PeriodoEvaluacion, EvaluacionCriterio, ArchivoRepositorio
 from entidades.models import EntidadPrestadora, Sede, ConfiguracionEvaluacionSede
@@ -1497,3 +1499,38 @@ def eliminar_archivo_criterio_sede(request, archivo_pk):
     archivo.delete()
 
     return JsonResponse({'success': True})
+
+
+@login_required
+@xframe_options_sameorigin
+def preview_archivo(request, archivo_pk):
+    """
+    Vista para previsualizar archivos en iframe (para auditores).
+    Sirve el archivo con headers que permiten embedding en iframes del mismo origen.
+    """
+    archivo = get_object_or_404(ArchivoRepositorio, pk=archivo_pk)
+
+    # Verificar acceso - debe pertenecer a la entidad del usuario
+    if request.user.rol != 'SUPER':
+        if request.user.entidad != archivo.evaluacion.sede.entidad:
+            return HttpResponse('Acceso denegado', status=403)
+
+    # Obtener el tipo MIME del archivo
+    content_type, _ = mimetypes.guess_type(archivo.archivo.name)
+    if not content_type:
+        content_type = 'application/octet-stream'
+
+    # Para PDFs e imágenes, servir inline (no como descarga)
+    try:
+        response = FileResponse(
+            archivo.archivo.open('rb'),
+            content_type=content_type
+        )
+        # Content-Disposition: inline permite ver en el navegador
+        response['Content-Disposition'] = f'inline; filename="{archivo.nombre}"'
+        # Deshabilitar cache para seguridad
+        response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response['Pragma'] = 'no-cache'
+        return response
+    except FileNotFoundError:
+        return HttpResponse('Archivo no encontrado', status=404)

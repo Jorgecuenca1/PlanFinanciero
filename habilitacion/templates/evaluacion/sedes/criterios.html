@@ -142,6 +142,11 @@
                         {% endif %}
                     </td>
                     <td>
+                        {% if user.solo_lectura %}
+                        <span class="badge {% if item.evaluacion.estado == 'C' %}bg-success{% elif item.evaluacion.estado == 'NC' %}bg-danger{% elif item.evaluacion.estado == 'NA' %}bg-secondary{% else %}bg-warning text-dark{% endif %}">
+                            {{ item.evaluacion.get_estado_display }}
+                        </span>
+                        {% else %}
                         <select class="form-select form-select-sm estado-select"
                                 onchange="guardarEstado({{ item.evaluacion.pk }}, this.value)"
                                 data-evaluacion="{{ item.evaluacion.pk }}">
@@ -149,6 +154,7 @@
                             <option value="{{ value }}" {% if item.evaluacion.estado == value %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
+                        {% endif %}
                     </td>
                     <td class="text-center">
                         <a href="{% url 'evaluacion:ver_documentos' evaluacion_pk=item.evaluacion.pk %}"
@@ -160,9 +166,13 @@
                         </a>
                     </td>
                     <td>
+                        {% if not user.solo_lectura %}
                         <button class="btn btn-sm btn-outline-primary" onclick="abrirComentarios({{ item.evaluacion.pk }}, '{{ item.criterio.numero }}')">
                             <i class="bi bi-chat-dots"></i>
                         </button>
+                        {% else %}
+                        <span class="text-muted"><i class="bi bi-eye"></i></span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endif %}
