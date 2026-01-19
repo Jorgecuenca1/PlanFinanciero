@@ -459,3 +459,55 @@ class ConfiguracionEvaluacionSede(models.Model):
                 grupo_estandar=grupo_obligatorio,
                 defaults={'activo': True, 'activado_por': usuario}
             )
+
+
+class ConfiguracionEstandarSede(models.Model):
+    """
+    Configuración de estándares (sub-estándares) habilitados para evaluación por SEDE.
+    Permite un control más granular que ConfiguracionEvaluacionSede.
+    Ejemplo: Dentro del grupo 11.2, se pueden activar solo algunos estándares específicos.
+    """
+    sede = models.ForeignKey(
+        Sede,
+        on_delete=models.CASCADE,
+        related_name='configuraciones_estandar',
+        verbose_name='Sede'
+    )
+    estandar = models.ForeignKey(
+        'estandares.Estandar',
+        on_delete=models.CASCADE,
+        related_name='configuraciones_sede',
+        verbose_name='Estándar'
+    )
+    activo = models.BooleanField('Activo', default=True)
+    fecha_activacion = models.DateTimeField('Fecha de activación', auto_now_add=True)
+    activado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='estandares_activados'
+    )
+    observaciones = models.TextField('Observaciones', blank=True)
+
+    class Meta:
+        verbose_name = 'Configuración de Estándar por Sede'
+        verbose_name_plural = 'Configuraciones de Estándar por Sede'
+        unique_together = ['sede', 'estandar']
+        ordering = ['sede', 'estandar__grupo__orden', 'estandar__orden']
+
+    def __str__(self):
+        estado = 'Activo' if self.activo else 'Inactivo'
+        return f"{self.sede.nombre} - {self.estandar.codigo} ({estado})"
+
+    @classmethod
+    def crear_configuracion_grupo(cls, sede, grupo, usuario=None, activo=True):
+        """Crea configuración para todos los estándares de un grupo"""
+        from estandares.models import Estandar
+        estandares = Estandar.objects.filter(grupo=grupo, activo=True)
+        for estandar in estandares:
+            cls.objects.get_or_create(
+                sede=sede,
+                estandar=estandar,
+                defaults={'activo': activo, 'activado_por': usuario}
+            )

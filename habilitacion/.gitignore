@@ -27,8 +27,8 @@ ENV/
 # Django
 *.log
 local_settings.py
-db.sqlite3
-media/
+# db.sqlite3 - incluido para desarrollo
+# media/ - incluido para repositorio de documentos
 
 # IDE
 .idea/

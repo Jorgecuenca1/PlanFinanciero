@@ -1227,9 +1227,12 @@ def sede_criterios_estandar(request, sede_pk, estandar_pk):
 @login_required
 def sede_configuracion(request, sede_pk):
     """
-    Configuración de grupos de criterios habilitados para una sede.
-    El grupo 11.1 es obligatorio y no se puede desactivar.
+    Configuración de estándares (sub-estándares) habilitados para una sede.
+    Permite seleccionar estándares individuales dentro de cada grupo.
+    El grupo 11.1 es obligatorio y todos sus estándares están activos por defecto.
     """
+    from entidades.models import ConfiguracionEstandarSede
+
     sede = get_object_or_404(Sede, pk=sede_pk)
 
     # Verificar acceso
@@ -1241,23 +1244,26 @@ def sede_configuracion(request, sede_pk):
     grupos = GrupoEstandar.objects.filter(activo=True).order_by('orden')
 
     if request.method == 'POST':
-        grupos_seleccionados = request.POST.getlist('grupos')
+        estandares_seleccionados = request.POST.getlist('estandares')
 
-        for grupo in grupos:
-            es_obligatorio = grupo.codigo == '11.1'
-            esta_seleccionado = str(grupo.id) in grupos_seleccionados
+        # Obtener todos los estándares
+        todos_estandares = Estandar.objects.filter(activo=True)
+
+        for estandar in todos_estandares:
+            es_obligatorio = estandar.grupo.codigo == '11.1'
+            esta_seleccionado = str(estandar.id) in estandares_seleccionados
 
             if es_obligatorio:
-                # Asegurar que el grupo obligatorio esté siempre activo
-                ConfiguracionEvaluacionSede.objects.get_or_create(
+                # Los estándares del grupo obligatorio siempre están activos
+                ConfiguracionEstandarSede.objects.get_or_create(
                     sede=sede,
-                    grupo_estandar=grupo,
+                    estandar=estandar,
                     defaults={'activo': True, 'activado_por': request.user}
                 )
             else:
-                config, created = ConfiguracionEvaluacionSede.objects.get_or_create(
+                config, created = ConfiguracionEstandarSede.objects.get_or_create(
                     sede=sede,
-                    grupo_estandar=grupo,
+                    estandar=estandar,
                     defaults={'activo': esta_seleccionado, 'activado_por': request.user}
                 )
                 if not created and config.activo != esta_seleccionado:
@@ -1268,31 +1274,49 @@ def sede_configuracion(request, sede_pk):
         messages.success(request, 'Configuración guardada correctamente.')
         return redirect('evaluacion:sede_categorias', sede_pk=sede.pk)
 
-    # Preparar datos de grupos
+    # Preparar datos de grupos con sus estándares
     grupos_data = []
     for grupo in grupos:
-        config = ConfiguracionEvaluacionSede.objects.filter(
-            sede=sede, grupo_estandar=grupo
-        ).first()
-
         es_obligatorio = grupo.codigo == '11.1'
-        activo = config.activo if config else es_obligatorio
 
-        # Contar estándares y criterios
-        estandares_count = Estandar.objects.filter(grupo=grupo, activo=True).count()
-        criterios_count = Criterio.objects.filter(
-            estandar__grupo=grupo,
-            activo=True,
-            es_titulo=False
-        ).count()
+        # Obtener estándares del grupo
+        estandares = Estandar.objects.filter(grupo=grupo, activo=True).order_by('orden')
+        estandares_data = []
+
+        for estandar in estandares:
+            config = ConfiguracionEstandarSede.objects.filter(
+                sede=sede, estandar=estandar
+            ).first()
+
+            # Por defecto, los obligatorios están activos, los demás inactivos
+            activo = config.activo if config else es_obligatorio
+
+            # Contar criterios del estándar
+            criterios_count = Criterio.objects.filter(
+                estandar=estandar,
+                activo=True,
+                es_titulo=False,
+                tipo_criterio='CRITERIO'
+            ).count()
+
+            estandares_data.append({
+                'estandar': estandar,
+                'activo': activo,
+                'criterios_count': criterios_count,
+                'config': config
+            })
+
+        # Contar totales del grupo
+        total_criterios = sum(e['criterios_count'] for e in estandares_data)
+        activos_count = sum(1 for e in estandares_data if e['activo'])
 
         grupos_data.append({
             'grupo': grupo,
-            'activo': activo,
             'es_obligatorio': es_obligatorio,
-            'estandares_count': estandares_count,
-            'criterios_count': criterios_count,
-            'config': config
+            'estandares': estandares_data,
+            'estandares_count': len(estandares_data),
+            'activos_count': activos_count,
+            'criterios_count': total_criterios
         })
 
     return render(request, 'evaluacion/sedes/configuracion.html', {

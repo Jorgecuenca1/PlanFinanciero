@@ -560,10 +560,41 @@ class EvaluacionCriterio(models.Model):
         return self.sede.entidad
 
 
+def ruta_archivo_criterio(instance, filename):
+    """
+    Genera la ruta de almacenamiento para archivos de criterios.
+    Estructura: documentos/entidad_slug/grupo_codigo/estandar_codigo/criterio_numero/filename
+    Ejemplo: documentos/clinica-ejemplo/11.1/TC01/1.1/documento.pdf
+    """
+    import re
+    from django.utils.text import slugify
+
+    evaluacion = instance.evaluacion
+    criterio = evaluacion.criterio
+    estandar = criterio.estandar
+    grupo = estandar.grupo
+    sede = evaluacion.sede
+    entidad = sede.entidad
+
+    # Crear slug seguro para la entidad
+    entidad_slug = slugify(entidad.razon_social)[:50] or f'entidad_{entidad.pk}'
+
+    # Códigos de grupo y estándar
+    grupo_codigo = re.sub(r'[^\w\-.]', '_', grupo.codigo)
+    estandar_codigo = re.sub(r'[^\w\-.]', '_', estandar.codigo)
+    criterio_numero = re.sub(r'[^\w\-.]', '_', str(criterio.numero))
+
+    # Limpiar nombre de archivo
+    nombre_archivo = re.sub(r'[^\w\-.]', '_', filename)
+
+    return f'documentos/{entidad_slug}/{grupo_codigo}/{estandar_codigo}/{criterio_numero}/{nombre_archivo}'
+
+
 class ArchivoRepositorio(models.Model):
     """
     Repositorio de archivos por evaluación de criterio.
     Permite múltiples archivos por criterio.
+    Estructura de carpetas: documentos/entidad/grupo/estandar/criterio/
     """
     evaluacion = models.ForeignKey(
         EvaluacionCriterio,
@@ -573,7 +604,7 @@ class ArchivoRepositorio(models.Model):
     )
     archivo = models.FileField(
         'Archivo',
-        upload_to='repositorio/%Y/%m/'
+        upload_to=ruta_archivo_criterio
     )
     nombre = models.CharField('Nombre', max_length=255)
     descripcion = models.TextField('Descripción', blank=True)
