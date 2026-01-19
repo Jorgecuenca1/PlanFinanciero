@@ -123,12 +123,20 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <a href="{% url 'entidades:detalle_sede' sede.pk %}" class="btn btn-sm btn-outline-primary">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="{% url 'entidades:editar_sede' sede.pk %}" class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'entidades:detalle_sede' sede.pk %}" class="btn btn-outline-primary" title="Ver">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'entidades:editar_sede' sede.pk %}" class="btn btn-outline-secondary" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'evaluacion:sede_configuracion' sede_pk=sede.pk %}" class="btn btn-outline-info" title="Configurar Estandares">
+                                            <i class="bi bi-gear"></i>
+                                        </a>
+                                        <a href="{% url 'evaluacion:sede_categorias' sede_pk=sede.pk %}" class="btn btn-outline-success" title="Evaluar">
+                                            <i class="bi bi-clipboard-check"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             {% empty %}
