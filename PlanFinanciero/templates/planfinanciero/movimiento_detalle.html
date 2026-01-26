@@ -1,0 +1,162 @@
+{% extends 'planfinanciero/base_app.html' %}
+{% load humanize %}
+
+{% block title %}Movimiento #{{ movimiento.pk }} - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:movimientos_lista' %}">Movimientos</a></li>
+<li class="breadcrumb-item active">Detalle #{{ movimiento.pk }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="page-title">Movimiento #{{ movimiento.pk }}</h1>
+        <p class="page-subtitle">{{ movimiento.get_tipo_display }} - {{ movimiento.fecha|date:"d/m/Y" }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'planfinanciero:movimientos_lista' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver
+        </a>
+        {% if not movimiento.anulado %}
+        <a href="{% url 'planfinanciero:movimiento_anular' movimiento.pk %}" class="btn btn-outline-danger">
+            <i class="bi bi-x-circle me-2"></i>Anular
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+{% if movimiento.anulado %}
+<div class="alert alert-danger mb-4">
+    <i class="bi bi-x-circle me-2"></i>
+    <strong>Movimiento Anulado</strong>
+    <hr>
+    <p class="mb-1"><strong>Motivo:</strong> {{ movimiento.motivo_anulacion }}</p>
+    <p class="mb-1"><strong>Anulado por:</strong> {{ movimiento.anulado_por.get_full_name|default:movimiento.anulado_por.username }}</p>
+    <p class="mb-0"><strong>Fecha de anulacion:</strong> {{ movimiento.fecha_anulacion|date:"d/m/Y H:i" }}</p>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>Informacion del Movimiento
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td class="text-muted" style="width: 40%;">ID:</td>
+                                <td class="fw-medium">#{{ movimiento.pk }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Tipo:</td>
+                                <td>
+                                    <span class="badge badge-tipo badge-{% if movimiento.tipo == 'INICIAL' %}inicial{% elif movimiento.tipo == 'ADICION' %}adicion{% elif movimiento.tipo == 'REDUCCION' %}reduccion{% else %}traslado{% endif %}">
+                                        {{ movimiento.get_tipo_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Fecha:</td>
+                                <td>{{ movimiento.fecha|date:"d/m/Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Valor:</td>
+                                <td class="currency {% if movimiento.tipo in 'REDUCCION,TRASLADO_DEBITO' %}currency-negative{% else %}currency-positive{% endif %} fs-5 fw-bold">
+                                    {% if movimiento.tipo in 'REDUCCION,TRASLADO_DEBITO' %}-{% else %}+{% endif %}${{ movimiento.valor|floatformat:0|intcomma }}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td class="text-muted" style="width: 40%;">Documento:</td>
+                                <td class="fw-medium">{{ movimiento.documento_soporte }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Registrado por:</td>
+                                <td>{{ movimiento.registrado_por.get_full_name|default:movimiento.registrado_por.username }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Fecha registro:</td>
+                                <td>{{ movimiento.fecha_registro|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Estado:</td>
+                                <td>
+                                    {% if movimiento.anulado %}
+                                    <span class="badge bg-danger">Anulado</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Activo</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                {% if movimiento.observaciones %}
+                <hr>
+                <h6 class="text-muted">Observaciones</h6>
+                <p class="mb-0">{{ movimiento.observaciones }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if movimiento.movimiento_relacionado %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="bi bi-link-45deg me-2"></i>Movimiento Relacionado (Traslado)
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-2">Este movimiento es parte de un traslado:</p>
+                <a href="{% url 'planfinanciero:movimiento_detalle' movimiento.movimiento_relacionado.pk %}" class="btn btn-outline-primary">
+                    Ver movimiento #{{ movimiento.movimiento_relacionado.pk }} - {{ movimiento.movimiento_relacionado.get_tipo_display }}
+                    ({{ movimiento.movimiento_relacionado.rubro.codigo }})
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-database me-2"></i>Rubro Afectado
+            </div>
+            <div class="card-body">
+                <h5 class="mb-1">
+                    <a href="{% url 'planfinanciero:rubro_detalle' movimiento.rubro.pk %}" class="text-decoration-none">
+                        {{ movimiento.rubro.codigo }}
+                    </a>
+                </h5>
+                <p class="text-muted mb-3">{{ movimiento.rubro.nombre }}</p>
+
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td class="text-muted">Fuente:</td>
+                        <td>{{ movimiento.rubro.fuente.nombre }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Saldo actual:</td>
+                        <td class="fw-bold">${{ movimiento.rubro.saldo_actual|floatformat:0|intcomma }}</td>
+                    </tr>
+                </table>
+
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{% url 'planfinanciero:rubro_detalle' movimiento.rubro.pk %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-eye me-2"></i>Ver Rubro
+                    </a>
+                    <a href="{% url 'planfinanciero:rubro_kardex' movimiento.rubro.pk %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-journal-text me-2"></i>Ver Kardex
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

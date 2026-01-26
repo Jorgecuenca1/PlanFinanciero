@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block body %}
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <h4><i class="bi bi-graph-up-arrow me-2"></i>Plan Financiero</h4>
+        <small>Sistema de Gestion Presupuestal</small>
+    </div>
+
+    <div class="sidebar-nav">
+        <div class="nav-section">Principal</div>
+        <a href="{% url 'planfinanciero:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <i class="bi bi-speedometer2"></i>
+            <span>Dashboard</span>
+        </a>
+
+        <div class="nav-section">Plan Financiero Ingresos</div>
+        <a href="{% url 'planfinanciero:rubros_lista' %}" class="nav-link {% if 'rubro' in request.resolver_match.url_name and 'gasto' not in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-database"></i>
+            <span>Rubros Presupuestales</span>
+        </a>
+        <a href="{% url 'planfinanciero:fuentes_lista' %}" class="nav-link {% if 'fuente' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-wallet2"></i>
+            <span>Ingresos Agregados</span>
+        </a>
+        <a href="{% url 'planfinanciero:organos_lista' %}" class="nav-link {% if 'organo' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-building"></i>
+            <span>Organos Ejecutores</span>
+        </a>
+        <a href="{% url 'planfinanciero:movimientos_lista' %}" class="nav-link {% if 'movimiento' in request.resolver_match.url_name and 'gasto' not in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-arrow-left-right"></i>
+            <span>Movimientos</span>
+        </a>
+        <a href="{% url 'planfinanciero:movimiento_crear' %}" class="nav-link">
+            <i class="bi bi-plus-circle"></i>
+            <span>Nuevo Movimiento</span>
+        </a>
+
+        <div class="nav-section">Plan Financiero Gastos</div>
+        <a href="{% url 'planfinanciero:gastos_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'gastos_dashboard' %}active{% endif %}">
+            <i class="bi bi-cash-stack"></i>
+            <span>Dashboard Gastos</span>
+        </a>
+        <a href="{% url 'planfinanciero:gastos_movimientos_lista' %}" class="nav-link {% if 'gastos_movimiento' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-list-ul"></i>
+            <span>Movimientos Gastos</span>
+        </a>
+        <a href="{% url 'planfinanciero:gastos_movimiento_crear' %}" class="nav-link">
+            <i class="bi bi-plus-circle"></i>
+            <span>Nuevo Mov. Gasto</span>
+        </a>
+
+        <div class="nav-section">Reportes</div>
+        <a href="{% url 'planfinanciero:reportes' %}" class="nav-link {% if request.resolver_match.url_name == 'reportes' %}active{% endif %}">
+            <i class="bi bi-grid-1x2"></i>
+            <span>Centro de Reportes</span>
+        </a>
+        <a href="{% url 'planfinanciero:reporte_ejecucion' %}" class="nav-link {% if 'ejecucion' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-file-earmark-bar-graph"></i>
+            <span>Ejecucion Presupuestal</span>
+        </a>
+        <a href="{% url 'planfinanciero:reporte_por_organo' %}" class="nav-link {% if 'por_organo' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="bi bi-table"></i>
+            <span>Por Organo Ejecutor</span>
+        </a>
+        <a href="{% url 'planfinanciero:exportar_excel' %}" class="nav-link">
+            <i class="bi bi-file-earmark-excel"></i>
+            <span>Exportar a Excel</span>
+        </a>
+
+        <div class="nav-section">Cuenta</div>
+        <a href="{% url 'accounts:perfil' %}" class="nav-link">
+            <i class="bi bi-person-circle"></i>
+            <span>Mi Perfil</span>
+        </a>
+        <a href="{% url 'accounts:logout' %}" class="nav-link text-danger">
+            <i class="bi bi-box-arrow-left"></i>
+            <span>Cerrar Sesion</span>
+        </a>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<main class="main-content">
+    <!-- Top Header -->
+    <header class="top-header">
+        <div class="d-flex align-items-center">
+            <button class="btn btn-link d-lg-none me-2" id="sidebarToggle">
+                <i class="bi bi-list fs-4"></i>
+            </button>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'planfinanciero:dashboard' %}">Inicio</a></li>
+                    {% block breadcrumb %}{% endblock %}
+                </ol>
+            </nav>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <!-- Notifications -->
+            <div class="dropdown">
+                <button class="btn btn-link position-relative" data-bs-toggle="dropdown">
+                    <i class="bi bi-bell fs-5 text-secondary"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end" style="width: 300px;">
+                    <h6 class="dropdown-header">Notificaciones</h6>
+                    <div class="dropdown-item text-muted small">
+                        No hay notificaciones nuevas
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Menu -->
+            <div class="dropdown user-dropdown">
+                <div class="d-flex align-items-center" data-bs-toggle="dropdown">
+                    <div class="user-avatar me-2">
+                        {{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}
+                    </div>
+                    <div class="d-none d-md-block">
+                        <div class="fw-semibold" style="font-size: 0.9rem;">{{ user.first_name }} {{ user.last_name }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">{{ user.username }}</div>
+                    </div>
+                    <i class="bi bi-chevron-down ms-2 text-muted"></i>
+                </div>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{% url 'accounts:perfil' %}"><i class="bi bi-person me-2"></i>Mi Perfil</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}"><i class="bi bi-box-arrow-left me-2"></i>Cerrar Sesion</a></li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="page-content">
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {% if message.tags == 'success' %}
+            <i class="bi bi-check-circle me-2"></i>
+            {% elif message.tags == 'error' or message.tags == 'danger' %}
+            <i class="bi bi-exclamation-circle me-2"></i>
+            {% elif message.tags == 'warning' %}
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            {% else %}
+            <i class="bi bi-info-circle me-2"></i>
+            {% endif %}
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+</main>
+
+{% block extra_js %}
+<script>
+    // Sidebar toggle for mobile
+    document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+        document.getElementById('sidebar').classList.toggle('show');
+    });
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+        const sidebar = document.getElementById('sidebar');
+        const toggle = document.getElementById('sidebarToggle');
+        if (window.innerWidth < 992 && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
+            sidebar.classList.remove('show');
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

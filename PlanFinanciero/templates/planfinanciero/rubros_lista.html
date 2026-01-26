@@ -1,0 +1,207 @@
+{% extends 'planfinanciero/base_app.html' %}
+{% load humanize %}
+
+{% block title %}Rubros Presupuestales - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Rubros Presupuestales</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="page-title">Rubros Presupuestales</h1>
+        <p class="page-subtitle">Catalogo de rubros del plan financiero de ingresos</p>
+    </div>
+    <a href="{% url 'planfinanciero:rubro_crear' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Nuevo Rubro
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Buscar</label>
+                <input type="text" name="q" class="form-control" placeholder="Codigo o nombre..." value="{{ busqueda }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Ingreso Agregado</label>
+                <select name="ingreso" class="form-select">
+                    <option value="">Todos</option>
+                    {% for i in ingresos %}
+                    <option value="{{ i.id }}" {% if ingreso_id == i.id|stringformat:"s" %}selected{% endif %}>{{ i.codigo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Organo</label>
+                <select name="organo" class="form-select">
+                    <option value="">Todos</option>
+                    {% for o in organos %}
+                    <option value="{{ o.id }}" {% if organo_id == o.id|stringformat:"s" %}selected{% endif %}>{{ o.nombre|truncatewords:3 }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Nivel</label>
+                <select name="nivel" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="AC" {% if nivel == 'AC' %}selected{% endif %}>Adm. Central</option>
+                    <option value="EP" {% if nivel == 'EP' %}selected{% endif %}>Est. Publicos</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Tipo</label>
+                <select name="solo_detalle" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="1" {% if solo_detalle %}selected{% endif %}>Solo Detalle</option>
+                </select>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-secondary w-100">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Codigo</th>
+                        <th>Nombre</th>
+                        <th>Ingreso</th>
+                        <th>Organo</th>
+                        <th class="text-center">Tipo</th>
+                        <th class="text-end">P. Inicial</th>
+                        <th class="text-end">Saldo Actual</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rubro in rubros %}
+                    <tr class="{% if rubro.es_totalizador %}table-light{% endif %}">
+                        <td>
+                            <a href="{% url 'planfinanciero:rubro_detalle' rubro.pk %}" class="fw-medium text-decoration-none">
+                                {{ rubro.codigo|truncatechars:30 }}
+                            </a>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 200px;" title="{{ rubro.nombre }}">
+                                {% if rubro.es_totalizador %}<i class="bi bi-folder me-1 text-warning"></i>{% endif %}
+                                {{ rubro.nombre }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if rubro.ingreso_agregado %}
+                            <span class="badge bg-light text-dark">{{ rubro.ingreso_agregado.codigo }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if rubro.organo_ejecutor %}
+                            <small>{{ rubro.organo_ejecutor.nombre|truncatewords:2 }}</small>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if rubro.es_totalizador %}
+                            <span class="badge bg-secondary">Total</span>
+                            {% else %}
+                            <span class="badge bg-primary">{{ rubro.nivel|default:"-" }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end currency">${{ rubro.presupuesto_inicial|floatformat:0|intcomma }}</td>
+                        <td class="text-end currency fw-bold">${{ rubro.saldo_actual|floatformat:0|intcomma }}</td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'planfinanciero:rubro_detalle' rubro.pk %}" class="btn btn-outline-primary" title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if not rubro.es_totalizador %}
+                                <a href="{% url 'planfinanciero:rubro_kardex' rubro.pk %}" class="btn btn-outline-secondary" title="Ver Kardex">
+                                    <i class="bi bi-journal-text"></i>
+                                </a>
+                                <a href="{% url 'planfinanciero:movimiento_crear' %}?rubro={{ rubro.pk }}" class="btn btn-outline-success" title="Agregar movimiento">
+                                    <i class="bi bi-plus"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="bi bi-database fs-1 d-block mb-2"></i>
+                            No hay rubros registrados
+                            <br>
+                            <a href="{% url 'planfinanciero:rubro_crear' %}" class="btn btn-primary mt-3">
+                                <i class="bi bi-plus-lg me-2"></i>Crear primer rubro
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Paginacion -->
+{% if rubros.has_other_pages %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if rubros.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ rubros.previous_page_number }}&q={{ busqueda }}&ingreso={{ ingreso_id }}&organo={{ organo_id }}&nivel={{ nivel }}&solo_detalle={{ solo_detalle }}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+        {% endif %}
+
+        {% for num in rubros.paginator.page_range %}
+        {% if rubros.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num > rubros.number|add:'-3' and num < rubros.number|add:'3' %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ num }}&q={{ busqueda }}&ingreso={{ ingreso_id }}&organo={{ organo_id }}&nivel={{ nivel }}&solo_detalle={{ solo_detalle }}">{{ num }}</a>
+        </li>
+        {% endif %}
+        {% endfor %}
+
+        {% if rubros.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ rubros.next_page_number }}&q={{ busqueda }}&ingreso={{ ingreso_id }}&organo={{ organo_id }}&nivel={{ nivel }}&solo_detalle={{ solo_detalle }}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<!-- Resumen -->
+<div class="card mt-4">
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <small class="text-muted">Total Rubros</small>
+                <h5>{{ rubros.paginator.count }}</h5>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted">Pagina Actual</small>
+                <h5>{{ rubros.number }} de {{ rubros.paginator.num_pages }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

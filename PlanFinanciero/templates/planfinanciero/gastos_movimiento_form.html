@@ -1,0 +1,108 @@
+{% extends 'planfinanciero/base_app.html' %}
+
+{% block title %}{{ titulo }} - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:gastos_dashboard' %}">Plan Financiero Gastos</a></li>
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:gastos_movimientos_lista' %}">Movimientos</a></li>
+<li class="breadcrumb-item active">{{ titulo }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-plus-circle me-2"></i>{{ titulo }}
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Tipos de Movimiento:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li><strong>Inicial:</strong> Presupuesto inicial del rubro</li>
+                        <li><strong>Adicion:</strong> Aumenta el presupuesto</li>
+                        <li><strong>Reduccion:</strong> Disminuye el presupuesto</li>
+                        <li><strong>Credito:</strong> Aumenta el presupuesto (traslado entrante)</li>
+                        <li><strong>Contracredito:</strong> Disminuye el presupuesto (traslado saliente)</li>
+                    </ul>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_rubro" class="form-label">Rubro *</label>
+                                {{ form.rubro }}
+                                {% if form.rubro.errors %}
+                                <div class="text-danger small mt-1">{{ form.rubro.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_tipo" class="form-label">Tipo de Movimiento *</label>
+                                {{ form.tipo }}
+                                {% if form.tipo.errors %}
+                                <div class="text-danger small mt-1">{{ form.tipo.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_fecha" class="form-label">Fecha de Operacion *</label>
+                                {{ form.fecha }}
+                                {% if form.fecha.errors %}
+                                <div class="text-danger small mt-1">{{ form.fecha.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_valor" class="form-label">Valor (COP) *</label>
+                                {{ form.valor }}
+                                {% if form.valor.errors %}
+                                <div class="text-danger small mt-1">{{ form.valor.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_documento_soporte" class="form-label">Documento Soporte *</label>
+                        {{ form.documento_soporte }}
+                        {% if form.documento_soporte.errors %}
+                        <div class="text-danger small mt-1">{{ form.documento_soporte.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">Numero de Ordenanza, Decreto o Acto Administrativo</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_observaciones" class="form-label">Observaciones</label>
+                        {{ form.observaciones }}
+                        {% if form.observaciones.errors %}
+                        <div class="text-danger small mt-1">{{ form.observaciones.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'planfinanciero:gastos_movimientos_lista' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-2"></i>{{ accion }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

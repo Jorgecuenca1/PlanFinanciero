@@ -1,0 +1,140 @@
+{% extends 'planfinanciero/base_app.html' %}
+{% load humanize %}
+
+{% block title %}Kardex {{ rubro.codigo }} - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:rubros_lista' %}">Rubros</a></li>
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:rubro_detalle' rubro.pk %}">{{ rubro.codigo }}</a></li>
+<li class="breadcrumb-item active">Kardex</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="page-title">Kardex - {{ rubro.codigo }}</h1>
+        <p class="page-subtitle">Historia cronologica de movimientos</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'planfinanciero:rubro_detalle' rubro.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Volver al Rubro
+        </a>
+        <a href="{% url 'planfinanciero:movimiento_crear' %}?rubro={{ rubro.pk }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Nuevo Movimiento
+        </a>
+    </div>
+</div>
+
+<!-- Información del Rubro -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-1">{{ rubro.nombre }}</h5>
+                <p class="text-muted mb-0">
+                    <span class="badge bg-light text-dark me-2">{{ rubro.fuente.codigo }}</span>
+                    {{ rubro.get_nivel_display }} | {{ rubro.get_tipo_recurso_display }}
+                </p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <div class="stat-label">Saldo Actual</div>
+                <div class="stat-value">${{ rubro.saldo_actual|floatformat:0|intcomma }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla Kardex -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-journal-text me-2"></i>Movimientos Cronologicos
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Fecha</th>
+                        <th style="width: 140px;">Tipo</th>
+                        <th>Documento Soporte</th>
+                        <th class="text-end" style="width: 150px;">Debito</th>
+                        <th class="text-end" style="width: 150px;">Credito</th>
+                        <th class="text-end" style="width: 150px;">Saldo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in movimientos_con_saldo %}
+                    <tr {% if item.mov.anulado %}class="table-secondary text-decoration-line-through"{% endif %}>
+                        <td>{{ item.mov.fecha|date:"d/m/Y" }}</td>
+                        <td>
+                            <span class="badge badge-tipo {% if item.mov.anulado %}badge-anulado{% elif item.mov.tipo == 'INICIAL' %}badge-inicial{% elif item.mov.tipo == 'ADICION' %}badge-adicion{% elif item.mov.tipo == 'REDUCCION' %}badge-reduccion{% else %}badge-traslado{% endif %}">
+                                {{ item.mov.get_tipo_display }}
+                            </span>
+                            {% if item.mov.anulado %}
+                            <span class="badge bg-secondary ms-1">ANULADO</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'planfinanciero:movimiento_detalle' item.mov.pk %}" class="text-decoration-none">
+                                {{ item.mov.documento_soporte }}
+                            </a>
+                            {% if item.mov.observaciones %}
+                            <i class="bi bi-info-circle text-muted ms-1" data-bs-toggle="tooltip" title="{{ item.mov.observaciones }}"></i>
+                            {% endif %}
+                        </td>
+                        <td class="text-end currency currency-negative">
+                            {% if item.mov.tipo in 'REDUCCION,TRASLADO_DEBITO' and not item.mov.anulado %}
+                            ${{ item.mov.valor|floatformat:0|intcomma }}
+                            {% endif %}
+                        </td>
+                        <td class="text-end currency currency-positive">
+                            {% if item.mov.tipo in 'INICIAL,ADICION,TRASLADO_CREDITO' and not item.mov.anulado %}
+                            ${{ item.mov.valor|floatformat:0|intcomma }}
+                            {% endif %}
+                        </td>
+                        <td class="text-end currency fw-bold">
+                            {% if item.saldo is not None %}
+                            ${{ item.saldo|floatformat:0|intcomma }}
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5">
+                            <i class="bi bi-journal fs-1 d-block mb-2"></i>
+                            No hay movimientos registrados para este rubro
+                            <br>
+                            <a href="{% url 'planfinanciero:movimiento_crear' %}?rubro={{ rubro.pk }}" class="btn btn-primary mt-3">
+                                <i class="bi bi-plus-lg me-2"></i>Registrar primer movimiento
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if movimientos_con_saldo %}
+                <tfoot class="table-light">
+                    <tr>
+                        <td colspan="3" class="fw-bold">SALDO FINAL</td>
+                        <td class="text-end currency currency-negative fw-bold">${{ rubro.total_reducciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end currency currency-positive fw-bold">${{ rubro.presupuesto_inicial|add:rubro.total_adiciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end currency fw-bold">${{ rubro.saldo_actual|floatformat:0|intcomma }}</td>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Inicializar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+</script>
+{% endblock %}

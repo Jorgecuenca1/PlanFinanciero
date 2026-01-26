@@ -1,0 +1,234 @@
+{% extends 'planfinanciero/base_app.html' %}
+{% load humanize %}
+
+{% block title %}Comparativo Ingresos vs Gastos - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:reportes' %}">Reportes</a></li>
+<li class="breadcrumb-item active">Comparativo</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="page-title">Comparativo Ingresos vs Gastos</h1>
+        <p class="page-subtitle">Analisis del equilibrio presupuestal</p>
+    </div>
+    <a href="{% url 'planfinanciero:reportes' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Volver a Reportes
+    </a>
+</div>
+
+<!-- Resumen Visual -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100 border-success">
+            <div class="card-body text-center">
+                <h6 class="text-success"><i class="bi bi-arrow-down-circle me-2"></i>TOTAL INGRESOS</h6>
+                <h2 class="text-success">${{ total_ingresos|floatformat:0|intcomma }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-danger">
+            <div class="card-body text-center">
+                <h6 class="text-danger"><i class="bi bi-arrow-up-circle me-2"></i>TOTAL GASTOS</h6>
+                <h2 class="text-danger">${{ total_gastos|floatformat:0|intcomma }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 {% if diferencia >= 0 %}border-primary{% else %}border-warning{% endif %}">
+            <div class="card-body text-center">
+                <h6 class="{% if diferencia >= 0 %}text-primary{% else %}text-warning{% endif %}">
+                    <i class="bi bi-calculator me-2"></i>DIFERENCIA
+                </h6>
+                <h2 class="{% if diferencia >= 0 %}text-primary{% else %}text-warning{% endif %}">
+                    ${{ diferencia|floatformat:0|intcomma }}
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Barra de Progreso -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h6 class="mb-3">Relacion Gastos / Ingresos</h6>
+        <div class="progress" style="height: 30px;">
+            <div class="progress-bar {% if porcentaje_ejecucion <= 100 %}bg-success{% else %}bg-danger{% endif %}"
+                 role="progressbar"
+                 style="width: {% if porcentaje_ejecucion > 100 %}100{% else %}{{ porcentaje_ejecucion|floatformat:0 }}{% endif %}%">
+                {{ porcentaje_ejecucion|floatformat:1 }}%
+            </div>
+        </div>
+        <div class="d-flex justify-content-between mt-2">
+            <small class="text-muted">0%</small>
+            <small class="text-muted">100%</small>
+        </div>
+        {% if porcentaje_ejecucion > 100 %}
+        <div class="alert alert-danger mt-3 mb-0">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Alerta:</strong> Los gastos superan los ingresos en {{ porcentaje_ejecucion|floatformat:1 }}%
+        </div>
+        {% elif porcentaje_ejecucion == 100 %}
+        <div class="alert alert-success mt-3 mb-0">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong>Equilibrado:</strong> Ingresos y gastos estan balanceados
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Detalle Comparativo -->
+<div class="row g-4">
+    <!-- Columna Ingresos -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Plan Financiero de Ingresos</h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-striped mb-0">
+                    <tbody>
+                        <tr>
+                            <td>Presupuesto Inicial</td>
+                            <td class="text-end fw-bold">${{ ingresos_inicial|floatformat:0|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td>Adiciones</td>
+                            <td class="text-end text-success">+${{ ingresos_adiciones|floatformat:0|intcomma }}</td>
+                        </tr>
+                        <tr>
+                            <td>Reducciones</td>
+                            <td class="text-end text-danger">-${{ ingresos_reducciones|floatformat:0|intcomma }}</td>
+                        </tr>
+                    </tbody>
+                    <tfoot class="table-success">
+                        <tr>
+                            <th>SALDO DEFINITIVO</th>
+                            <th class="text-end">${{ total_ingresos|floatformat:0|intcomma }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Columna Gastos -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-cash-stack me-2"></i>Plan Financiero de Gastos</h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-striped mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Rubro</th>
+                            <th class="text-end">Saldo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rubro in rubros_gastos %}
+                        <tr>
+                            <td>{{ rubro.nombre }}</td>
+                            <td class="text-end fw-bold">${{ rubro.saldo|floatformat:0|intcomma }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-danger">
+                        <tr>
+                            <th>TOTAL GASTOS</th>
+                            <th class="text-end">${{ total_gastos|floatformat:0|intcomma }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detalle de Gastos por Tipo -->
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="bi bi-table me-2"></i>Detalle de Gastos por Rubro
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Rubro</th>
+                        <th class="text-end">Inicial</th>
+                        <th class="text-end">Adiciones</th>
+                        <th class="text-end">Reducciones</th>
+                        <th class="text-end">Creditos</th>
+                        <th class="text-end">Contracreditos</th>
+                        <th class="text-end">Saldo</th>
+                        <th class="text-end">% del Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rubro in rubros_gastos %}
+                    <tr>
+                        <td><strong>{{ rubro.nombre }}</strong></td>
+                        <td class="text-end">${{ rubro.inicial|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-success">${{ rubro.adiciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-danger">${{ rubro.reducciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-info">${{ rubro.creditos|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-warning">${{ rubro.contracreditos|floatformat:0|intcomma }}</td>
+                        <td class="text-end fw-bold">${{ rubro.saldo|floatformat:0|intcomma }}</td>
+                        <td class="text-end">
+                            {% if total_gastos > 0 %}
+                            {{ rubro.saldo|floatformat:0|intcomma }}
+                            {% widthratio rubro.saldo total_gastos 100 %}%
+                            {% else %}
+                            0%
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light fw-bold">
+                    <tr>
+                        <td>TOTALES</td>
+                        <td class="text-end">${{ gastos_inicial|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-success">${{ gastos_adiciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-danger">${{ gastos_reducciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-info">${{ gastos_creditos|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-warning">${{ gastos_contracreditos|floatformat:0|intcomma }}</td>
+                        <td class="text-end">${{ total_gastos|floatformat:0|intcomma }}</td>
+                        <td class="text-end">100%</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Resumen Final -->
+<div class="alert {% if diferencia >= 0 %}alert-success{% else %}alert-danger{% endif %} mt-4">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h4 class="mb-1">
+                {% if diferencia >= 0 %}
+                <i class="bi bi-check-circle-fill me-2"></i>Presupuesto Equilibrado
+                {% else %}
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>Deficit Presupuestal
+                {% endif %}
+            </h4>
+            <p class="mb-0">
+                {% if diferencia >= 0 %}
+                Los ingresos cubren los gastos. Superavit de ${{ diferencia|floatformat:0|intcomma }}
+                {% else %}
+                Los gastos exceden los ingresos. Deficit de ${{ diferencia|floatformat:0|intcomma }}
+                {% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <h3 class="mb-0">${{ diferencia|floatformat:0|intcomma }}</h3>
+        </div>
+    </div>
+</div>
+{% endblock %}

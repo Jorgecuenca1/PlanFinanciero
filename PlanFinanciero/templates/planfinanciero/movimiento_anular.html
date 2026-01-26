@@ -1,0 +1,86 @@
+{% extends 'planfinanciero/base_app.html' %}
+{% load humanize %}
+
+{% block title %}Anular Movimiento - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:movimientos_lista' %}">Movimientos</a></li>
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:movimiento_detalle' movimiento.pk %}">#{{ movimiento.pk }}</a></li>
+<li class="breadcrumb-item active">Anular</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <i class="bi bi-exclamation-triangle me-2"></i>Anular Movimiento
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Atencion:</strong> Esta accion no puede deshacerse. El movimiento quedara marcado como anulado pero no sera eliminado del sistema (para mantener la trazabilidad).
+                </div>
+
+                <h6>Detalle del movimiento a anular:</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td class="text-muted">ID:</td>
+                        <td>#{{ movimiento.pk }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Tipo:</td>
+                        <td>{{ movimiento.get_tipo_display }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Rubro:</td>
+                        <td>{{ movimiento.rubro.codigo }} - {{ movimiento.rubro.nombre }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Fecha:</td>
+                        <td>{{ movimiento.fecha|date:"d/m/Y" }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Valor:</td>
+                        <td class="fw-bold">${{ movimiento.valor|floatformat:0|intcomma }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Documento:</td>
+                        <td>{{ movimiento.documento_soporte }}</td>
+                    </tr>
+                </table>
+
+                {% if movimiento.movimiento_relacionado %}
+                <div class="alert alert-info">
+                    <i class="bi bi-link-45deg me-2"></i>
+                    <strong>Nota:</strong> Este movimiento es parte de un traslado. Al anularlo, tambien se anulara el movimiento relacionado (#{{ movimiento.movimiento_relacionado.pk }}).
+                </div>
+                {% endif %}
+
+                <hr>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_motivo" class="form-label">Motivo de la Anulacion *</label>
+                        {{ form.motivo }}
+                        {% if form.motivo.errors %}
+                        <div class="text-danger small mt-1">{{ form.motivo.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">Explique brevemente la razon de la anulacion</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'planfinanciero:movimiento_detalle' movimiento.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-x-circle me-2"></i>Confirmar Anulacion
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

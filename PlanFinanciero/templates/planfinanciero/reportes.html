@@ -1,0 +1,265 @@
+{% extends 'planfinanciero/base_app.html' %}
+{% load humanize %}
+
+{% block title %}Reportes - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Reportes</li>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h1 class="page-title">Centro de Reportes</h1>
+    <p class="page-subtitle">Consultas, tablas dinamicas y exportaciones del plan financiero</p>
+</div>
+
+<!-- ============================================ -->
+<!-- REPORTES DE INGRESOS -->
+<!-- ============================================ -->
+<div class="card mb-4 border-primary">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-graph-up-arrow me-2"></i>Plan Financiero de Ingresos</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <!-- Ejecucion Presupuestal Ingresos -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-primary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-file-earmark-bar-graph fs-1 text-primary mb-3"></i>
+                        <h6 class="card-title">Ejecucion Presupuestal</h6>
+                        <p class="card-text small text-muted">Estado actual de todos los rubros de ingresos con sus saldos.</p>
+                        <a href="{% url 'planfinanciero:reporte_ejecucion' %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-eye me-2"></i>Ver Reporte
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exportar Excel Ingresos -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center">
+                        <i class="bi bi-file-earmark-excel fs-1 text-success mb-3"></i>
+                        <h6 class="card-title">Exportar Ingresos</h6>
+                        <p class="card-text small text-muted">Descarga el reporte completo en formato CSV/Excel.</p>
+                        <a href="{% url 'planfinanciero:exportar_excel' %}" class="btn btn-success btn-sm">
+                            <i class="bi bi-download me-2"></i>Descargar CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kardex por Rubro -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="bi bi-journal-text fs-1 text-secondary mb-3"></i>
+                        <h6 class="card-title">Kardex por Rubro</h6>
+                        <p class="card-text small text-muted">Historial cronologico de movimientos por rubro.</p>
+                        <a href="{% url 'planfinanciero:rubros_lista' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-search me-2"></i>Seleccionar Rubro
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tablas Dinamicas Ingresos -->
+        <h6 class="mt-4 mb-3"><i class="bi bi-table me-2"></i>Tablas Dinamicas de Ingresos</h6>
+        <div class="row g-3">
+            <div class="col-md-4 col-lg-2">
+                <a href="{% url 'planfinanciero:reporte_por_nivel' %}" class="btn btn-outline-info w-100">
+                    <i class="bi bi-layers me-1"></i>Por Nivel
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <a href="{% url 'planfinanciero:reporte_por_organo' %}" class="btn btn-outline-warning w-100">
+                    <i class="bi bi-building me-1"></i>Por Organo
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <a href="{% url 'planfinanciero:reporte_por_ingreso' %}" class="btn btn-outline-success w-100">
+                    <i class="bi bi-cash-stack me-1"></i>Por Ingreso
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <a href="{% url 'planfinanciero:reporte_por_clase' %}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-tags me-1"></i>Por Clase
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <a href="{% url 'planfinanciero:reporte_por_tipo' %}" class="btn btn-outline-dark w-100">
+                    <i class="bi bi-list-check me-1"></i>Por Tipo
+                </a>
+            </div>
+            <div class="col-md-4 col-lg-2">
+                <a href="{% url 'planfinanciero:reporte_cruzado' %}" class="btn btn-outline-danger w-100">
+                    <i class="bi bi-grid-3x3 me-1"></i>Cruzado
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- REPORTES DE GASTOS -->
+<!-- ============================================ -->
+<div class="card mb-4 border-warning">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0"><i class="bi bi-cash-stack me-2"></i>Plan Financiero de Gastos</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <!-- Dashboard Gastos -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-warning">
+                    <div class="card-body text-center">
+                        <i class="bi bi-speedometer2 fs-1 text-warning mb-3"></i>
+                        <h6 class="card-title">Resumen de Gastos</h6>
+                        <p class="card-text small text-muted">Vista consolidada de Funcionamiento, Deuda e Inversion.</p>
+                        <a href="{% url 'planfinanciero:gastos_dashboard' %}" class="btn btn-warning btn-sm">
+                            <i class="bi bi-eye me-2"></i>Ver Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exportar Excel Gastos -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center">
+                        <i class="bi bi-file-earmark-excel fs-1 text-success mb-3"></i>
+                        <h6 class="card-title">Exportar Gastos</h6>
+                        <p class="card-text small text-muted">Descarga el reporte de gastos en formato CSV/Excel.</p>
+                        <a href="{% url 'planfinanciero:exportar_gastos_excel' %}" class="btn btn-success btn-sm">
+                            <i class="bi bi-download me-2"></i>Descargar CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparativo -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-info">
+                    <div class="card-body text-center">
+                        <i class="bi bi-bar-chart-line fs-1 text-info mb-3"></i>
+                        <h6 class="card-title">Comparativo Ingresos vs Gastos</h6>
+                        <p class="card-text small text-muted">Analisis comparativo entre presupuesto de ingresos y gastos.</p>
+                        <a href="{% url 'planfinanciero:reporte_comparativo' %}" class="btn btn-info btn-sm">
+                            <i class="bi bi-eye me-2"></i>Ver Comparativo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kardex por Rubro de Gasto -->
+        <h6 class="mt-4 mb-3"><i class="bi bi-journal-text me-2"></i>Kardex por Rubro de Gasto</h6>
+        <div class="row g-3">
+            <div class="col-md-4">
+                <a href="{% url 'planfinanciero:gastos_rubro_kardex' 'FUNCIONAMIENTO' %}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-building me-1"></i>Funcionamiento
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'planfinanciero:gastos_rubro_kardex' 'DEUDA' %}" class="btn btn-outline-danger w-100">
+                    <i class="bi bi-credit-card me-1"></i>Deuda
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'planfinanciero:gastos_rubro_kardex' 'INVERSION' %}" class="btn btn-outline-success w-100">
+                    <i class="bi bi-graph-up me-1"></i>Inversion
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- RESUMEN CONSOLIDADO -->
+<!-- ============================================ -->
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Resumen Consolidado</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card bg-light mb-3">
+                    <div class="card-header">
+                        <i class="bi bi-arrow-down-circle text-success me-2"></i>Total Ingresos
+                    </div>
+                    <div class="card-body">
+                        <h3 class="text-success">${{ total_ingresos|floatformat:0|intcomma }}</h3>
+                        <small class="text-muted">Presupuesto definitivo de ingresos</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-light mb-3">
+                    <div class="card-header">
+                        <i class="bi bi-arrow-up-circle text-danger me-2"></i>Total Gastos
+                    </div>
+                    <div class="card-body">
+                        <h3 class="text-danger">${{ total_gastos|floatformat:0|intcomma }}</h3>
+                        <small class="text-muted">Presupuesto definitivo de gastos</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="alert {% if diferencia >= 0 %}alert-success{% else %}alert-danger{% endif %}">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5 class="mb-0">
+                        {% if diferencia >= 0 %}
+                        <i class="bi bi-check-circle me-2"></i>Presupuesto Equilibrado
+                        {% else %}
+                        <i class="bi bi-exclamation-triangle me-2"></i>Deficit Presupuestal
+                        {% endif %}
+                    </h5>
+                    <small>Diferencia: Ingresos - Gastos</small>
+                </div>
+                <div class="col-md-4 text-end">
+                    <h4 class="mb-0">${{ diferencia|floatformat:0|intcomma }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Guia de Reportes -->
+<div class="card">
+    <div class="card-header bg-light">
+        <i class="bi bi-info-circle me-2"></i>Guia de Reportes
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Ingresos - Tipos de Movimiento:</h6>
+                <ul class="small">
+                    <li><strong>Inicial:</strong> Presupuesto aprobado</li>
+                    <li><strong>Adicion:</strong> Incrementos (+)</li>
+                    <li><strong>Reduccion:</strong> Disminuciones (-)</li>
+                </ul>
+                <div class="alert alert-secondary small py-2">
+                    <code>Saldo = Inicial + Adiciones - Reducciones</code>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6>Gastos - Tipos de Movimiento:</h6>
+                <ul class="small">
+                    <li><strong>Inicial:</strong> Presupuesto aprobado</li>
+                    <li><strong>Adicion:</strong> Incrementos (+)</li>
+                    <li><strong>Reduccion:</strong> Disminuciones (-)</li>
+                    <li><strong>Credito:</strong> Traslados recibidos (+)</li>
+                    <li><strong>Contracredito:</strong> Traslados enviados (-)</li>
+                </ul>
+                <div class="alert alert-secondary small py-2">
+                    <code>Saldo = Inicial + Adiciones - Reducciones + Creditos - Contracreditos</code>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

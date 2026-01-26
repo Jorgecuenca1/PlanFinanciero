@@ -1,0 +1,168 @@
+{% extends 'planfinanciero/base_app.html' %}
+
+{% block title %}{{ titulo }} - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:movimientos_lista' %}">Movimientos</a></li>
+<li class="breadcrumb-item active">{{ titulo }}</li>
+{% endblock %}
+
+{% block content %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-plus-circle me-2"></i>{{ titulo }}
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Tipos disponibles:</strong> Presupuesto Inicial, Adicion, Reduccion
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_rubro" class="form-label">Rubro Presupuestal *</label>
+                                <select id="id_rubro" name="rubro" class="form-select select2-rubro" required>
+                                    {% if form.rubro.value %}
+                                    <option value="{{ form.rubro.value }}" selected>{{ rubro_seleccionado|default:"Rubro seleccionado" }}</option>
+                                    {% endif %}
+                                </select>
+                                {% if form.rubro.errors %}
+                                <div class="text-danger small mt-1">{{ form.rubro.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Busque por codigo o nombre del rubro</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_tipo" class="form-label">Tipo de Movimiento *</label>
+                                {{ form.tipo }}
+                                {% if form.tipo.errors %}
+                                <div class="text-danger small mt-1">{{ form.tipo.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_fecha" class="form-label">Fecha de Operacion *</label>
+                                {{ form.fecha }}
+                                {% if form.fecha.errors %}
+                                <div class="text-danger small mt-1">{{ form.fecha.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_valor" class="form-label">Valor (COP) *</label>
+                                {{ form.valor }}
+                                {% if form.valor.errors %}
+                                <div class="text-danger small mt-1">{{ form.valor.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_documento_soporte" class="form-label">Documento Soporte *</label>
+                        {{ form.documento_soporte }}
+                        {% if form.documento_soporte.errors %}
+                        <div class="text-danger small mt-1">{{ form.documento_soporte.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">Numero de Ordenanza, Decreto o Acto Administrativo</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_observaciones" class="form-label">Observaciones</label>
+                        {{ form.observaciones }}
+                        {% if form.observaciones.errors %}
+                        <div class="text-danger small mt-1">{{ form.observaciones.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Las reducciones no pueden exceder el saldo disponible del rubro.</li>
+                            <li>Una vez registrado, el movimiento no puede ser eliminado, solo anulado.</li>
+                        </ul>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'planfinanciero:movimientos_lista' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-2"></i>{{ accion }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/es.js"></script>
+<script>
+$(document).ready(function() {
+    $('.select2-rubro').select2({
+        theme: 'bootstrap-5',
+        language: 'es',
+        placeholder: 'Escriba para buscar un rubro...',
+        allowClear: true,
+        minimumInputLength: 2,
+        ajax: {
+            url: '{% url "planfinanciero:api_buscar_rubros" %}',
+            dataType: 'json',
+            delay: 300,
+            data: function(params) {
+                return {
+                    q: params.term
+                };
+            },
+            processResults: function(data) {
+                return {
+                    results: data.results.map(function(item) {
+                        return {
+                            id: item.id,
+                            text: item.codigo + ' - ' + item.nombre,
+                            saldo: item.saldo
+                        };
+                    })
+                };
+            },
+            cache: true
+        },
+        templateResult: function(item) {
+            if (item.loading) return item.text;
+            var $result = $('<div class="d-flex justify-content-between align-items-center">' +
+                '<div><strong>' + item.text.split(' - ')[0] + '</strong><br><small class="text-muted">' +
+                (item.text.split(' - ').slice(1).join(' - ') || '') + '</small></div>' +
+                '<div class="text-end"><small class="text-success">Saldo: $' +
+                (item.saldo ? Number(item.saldo).toLocaleString('es-CO') : '0') + '</small></div></div>');
+            return $result;
+        },
+        templateSelection: function(item) {
+            return item.text || item.id;
+        }
+    });
+});
+</script>
+{% endblock %}

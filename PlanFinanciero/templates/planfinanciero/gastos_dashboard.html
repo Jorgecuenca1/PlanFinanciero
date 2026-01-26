@@ -1,0 +1,168 @@
+{% extends 'planfinanciero/base_app.html' %}
+{% load humanize %}
+
+{% block title %}Plan Financiero Gastos - Dashboard{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Plan Financiero Gastos</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="page-title">Plan Financiero de Gastos</h1>
+        <p class="page-subtitle">Resumen de los rubros: Funcionamiento, Deuda e Inversion</p>
+    </div>
+    <a href="{% url 'planfinanciero:gastos_movimiento_crear' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Nuevo Movimiento
+    </a>
+</div>
+
+<!-- Totales Generales -->
+<div class="row g-4 mb-4">
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-label">P. Inicial</div>
+            <div class="stat-value text-primary">${{ total_inicial|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-label">Adiciones</div>
+            <div class="stat-value text-success">+${{ total_adiciones|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-label">Reducciones</div>
+            <div class="stat-value text-danger">-${{ total_reducciones|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-label">Creditos</div>
+            <div class="stat-value text-info">+${{ total_creditos|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-label">Contracreditos</div>
+            <div class="stat-value text-warning">-${{ total_contracreditos|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card" style="background: linear-gradient(135deg, #1e3a5f, #0f172a); color: white;">
+            <div class="stat-label" style="color: rgba(255,255,255,0.7);">Saldo Total</div>
+            <div class="stat-value" style="color: white;">${{ total_saldo|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de Rubros -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-table me-2"></i>Rubros de Gastos
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Rubro</th>
+                        <th class="text-end">P. Inicial</th>
+                        <th class="text-end">Adiciones</th>
+                        <th class="text-end">Reducciones</th>
+                        <th class="text-end">Creditos</th>
+                        <th class="text-end">Contracreditos</th>
+                        <th class="text-end">Saldo Actual</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in datos_rubros %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.rubro.nombre }}</strong>
+                        </td>
+                        <td class="text-end currency">${{ item.inicial|floatformat:0|intcomma }}</td>
+                        <td class="text-end currency currency-positive">${{ item.adiciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end currency currency-negative">${{ item.reducciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end currency text-info">${{ item.creditos|floatformat:0|intcomma }}</td>
+                        <td class="text-end currency text-warning">${{ item.contracreditos|floatformat:0|intcomma }}</td>
+                        <td class="text-end currency fw-bold">${{ item.saldo|floatformat:0|intcomma }}</td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'planfinanciero:gastos_rubro_kardex' item.rubro.codigo %}" class="btn btn-outline-secondary" title="Ver Kardex">
+                                    <i class="bi bi-journal-text"></i>
+                                </a>
+                                <a href="{% url 'planfinanciero:gastos_movimiento_crear' %}?rubro={{ item.rubro.codigo }}" class="btn btn-outline-success" title="Agregar movimiento">
+                                    <i class="bi bi-plus"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light fw-bold">
+                    <tr>
+                        <td>TOTALES</td>
+                        <td class="text-end">${{ total_inicial|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-success">${{ total_adiciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-danger">${{ total_reducciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-info">${{ total_creditos|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-warning">${{ total_contracreditos|floatformat:0|intcomma }}</td>
+                        <td class="text-end">${{ total_saldo|floatformat:0|intcomma }}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Ultimos Movimientos -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-clock-history me-2"></i>Ultimos Movimientos</span>
+        <a href="{% url 'planfinanciero:gastos_movimientos_lista' %}" class="btn btn-sm btn-outline-primary">Ver todos</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Rubro</th>
+                        <th>Documento</th>
+                        <th class="text-end">Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mov in ultimos_movimientos %}
+                    <tr>
+                        <td>{{ mov.fecha|date:"d/m/Y" }}</td>
+                        <td>
+                            <span class="badge {% if mov.tipo == 'INICIAL' %}bg-primary{% elif mov.tipo == 'ADICION' %}bg-success{% elif mov.tipo == 'REDUCCION' %}bg-danger{% elif mov.tipo == 'CREDITO' %}bg-info{% else %}bg-warning{% endif %}">
+                                {{ mov.get_tipo_display }}
+                            </span>
+                        </td>
+                        <td>{{ mov.rubro.nombre }}</td>
+                        <td>{{ mov.documento_soporte }}</td>
+                        <td class="text-end currency {% if mov.tipo in 'REDUCCION,CONTRACREDITO' %}currency-negative{% else %}currency-positive{% endif %}">
+                            {% if mov.tipo in 'REDUCCION,CONTRACREDITO' %}-{% else %}+{% endif %}${{ mov.valor|floatformat:0|intcomma }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">
+                            No hay movimientos registrados
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

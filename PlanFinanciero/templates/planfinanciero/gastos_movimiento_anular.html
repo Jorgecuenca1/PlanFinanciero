@@ -1,0 +1,79 @@
+{% extends 'planfinanciero/base_app.html' %}
+{% load humanize %}
+
+{% block title %}Anular Movimiento de Gasto - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:gastos_dashboard' %}">Plan Financiero Gastos</a></li>
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:gastos_movimientos_lista' %}">Movimientos</a></li>
+<li class="breadcrumb-item active">Anular</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <i class="bi bi-exclamation-triangle me-2"></i>Anular Movimiento de Gasto
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Advertencia:</strong> Esta accion no se puede deshacer.
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h6>Movimiento a Anular:</h6>
+                        <table class="table table-sm mb-0">
+                            <tr>
+                                <td class="text-muted">Rubro:</td>
+                                <td><strong>{{ movimiento.rubro.nombre }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Tipo:</td>
+                                <td>{{ movimiento.get_tipo_display }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Fecha:</td>
+                                <td>{{ movimiento.fecha|date:"d/m/Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Valor:</td>
+                                <td class="fw-bold">${{ movimiento.valor|floatformat:0|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Documento:</td>
+                                <td>{{ movimiento.documento_soporte }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Motivo de Anulacion *</label>
+                        {{ form.motivo }}
+                        {% if form.motivo.errors %}
+                        <div class="text-danger small mt-1">{{ form.motivo.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'planfinanciero:gastos_movimiento_detalle' movimiento.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-x-circle me-2"></i>Confirmar Anulacion
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

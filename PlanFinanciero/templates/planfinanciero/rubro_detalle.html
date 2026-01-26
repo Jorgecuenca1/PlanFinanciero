@@ -1,0 +1,174 @@
+{% extends 'planfinanciero/base_app.html' %}
+{% load humanize %}
+
+{% block title %}{{ rubro.codigo }} - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:rubros_lista' %}">Rubros</a></li>
+<li class="breadcrumb-item active">{{ rubro.codigo }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="page-title">{{ rubro.codigo }}</h1>
+        <p class="page-subtitle">{{ rubro.nombre }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'planfinanciero:rubro_kardex' rubro.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-journal-text me-2"></i>Ver Kardex
+        </a>
+        <a href="{% url 'planfinanciero:movimiento_crear' %}?rubro={{ rubro.pk }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Nuevo Movimiento
+        </a>
+        <a href="{% url 'planfinanciero:rubro_editar' rubro.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-pencil me-2"></i>Editar
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Información del Rubro -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>Informacion del Rubro
+            </div>
+            <div class="card-body">
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td class="text-muted">Codigo:</td>
+                        <td class="fw-medium">{{ rubro.codigo }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Fuente:</td>
+                        <td>{{ rubro.fuente.nombre }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Nivel:</td>
+                        <td>{{ rubro.get_nivel_display }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Tipo Recurso:</td>
+                        <td>{{ rubro.get_tipo_recurso_display }}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Estado:</td>
+                        <td>
+                            {% if rubro.activo %}
+                            <span class="badge bg-success">Activo</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+                {% if rubro.descripcion %}
+                <hr>
+                <p class="text-muted small mb-0">{{ rubro.descripcion }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen Financiero -->
+    <div class="col-lg-8">
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-label">Presupuesto Inicial</div>
+                    <div class="stat-value text-primary">${{ rubro.presupuesto_inicial|floatformat:0|intcomma }}</div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-label">Total Adiciones</div>
+                    <div class="stat-value text-success">+${{ rubro.total_adiciones|floatformat:0|intcomma }}</div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="stat-card">
+                    <div class="stat-label">Total Reducciones</div>
+                    <div class="stat-value text-danger">-${{ rubro.total_reducciones|floatformat:0|intcomma }}</div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="stat-card" style="background: linear-gradient(135deg, #1e3a5f, #0f172a); color: white;">
+                    <div class="stat-label" style="color: rgba(255,255,255,0.7);">Saldo Definitivo</div>
+                    <div class="stat-value" style="color: white;">${{ rubro.saldo_actual|floatformat:0|intcomma }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-center flex-wrap gap-2 text-center">
+                    <span class="badge bg-primary p-2">${{ rubro.presupuesto_inicial|floatformat:0|intcomma }}</span>
+                    <span class="text-muted">+</span>
+                    <span class="badge bg-success p-2">${{ rubro.total_adiciones|floatformat:0|intcomma }}</span>
+                    <span class="text-muted">-</span>
+                    <span class="badge bg-danger p-2">${{ rubro.total_reducciones|floatformat:0|intcomma }}</span>
+                    <span class="text-muted">=</span>
+                    <span class="badge bg-dark p-2 fs-6">${{ rubro.saldo_actual|floatformat:0|intcomma }}</span>
+                </div>
+                <p class="text-muted text-center small mt-2 mb-0">
+                    Presupuesto Inicial + Adiciones - Reducciones = Saldo Definitivo
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimos Movimientos -->
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-clock-history me-2"></i>Ultimos Movimientos</span>
+        <a href="{% url 'planfinanciero:rubro_kardex' rubro.pk %}" class="btn btn-sm btn-outline-primary">Ver todos (Kardex)</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Documento</th>
+                        <th class="text-end">Valor</th>
+                        <th>Registrado por</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mov in movimientos %}
+                    <tr>
+                        <td>{{ mov.fecha|date:"d/m/Y" }}</td>
+                        <td>
+                            <span class="badge badge-tipo badge-{% if mov.tipo == 'INICIAL' %}inicial{% elif mov.tipo == 'ADICION' %}adicion{% elif mov.tipo == 'REDUCCION' %}reduccion{% else %}traslado{% endif %}">
+                                {{ mov.get_tipo_display }}
+                            </span>
+                        </td>
+                        <td>{{ mov.documento_soporte }}</td>
+                        <td class="text-end currency {% if mov.tipo in 'REDUCCION,TRASLADO_DEBITO' %}currency-negative{% else %}currency-positive{% endif %}">
+                            {% if mov.tipo in 'REDUCCION,TRASLADO_DEBITO' %}-{% else %}+{% endif %}${{ mov.valor|floatformat:0|intcomma }}
+                        </td>
+                        <td>{{ mov.registrado_por.get_full_name|default:mov.registrado_por.username }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'planfinanciero:movimiento_detalle' mov.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            No hay movimientos registrados para este rubro
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

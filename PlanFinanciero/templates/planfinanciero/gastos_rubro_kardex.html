@@ -1,0 +1,139 @@
+{% extends 'planfinanciero/base_app.html' %}
+{% load humanize %}
+
+{% block title %}Kardex {{ rubro.nombre }} - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:gastos_dashboard' %}">Plan Financiero Gastos</a></li>
+<li class="breadcrumb-item active">Kardex {{ rubro.nombre }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="page-title">Kardex: {{ rubro.nombre }}</h1>
+        <p class="page-subtitle">Historial de movimientos del rubro</p>
+    </div>
+    <a href="{% url 'planfinanciero:gastos_movimiento_crear' %}?rubro={{ rubro.codigo }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Nuevo Movimiento
+    </a>
+</div>
+
+<!-- Resumen -->
+<div class="row g-4 mb-4">
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-label">P. Inicial</div>
+            <div class="stat-value text-primary">${{ rubro.presupuesto_inicial|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-label">Adiciones</div>
+            <div class="stat-value text-success">+${{ rubro.total_adiciones|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-label">Reducciones</div>
+            <div class="stat-value text-danger">-${{ rubro.total_reducciones|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-label">Creditos</div>
+            <div class="stat-value text-info">+${{ rubro.total_creditos|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card">
+            <div class="stat-label">Contracreditos</div>
+            <div class="stat-value text-warning">-${{ rubro.total_contracreditos|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stat-card" style="background: linear-gradient(135deg, #1e3a5f, #0f172a); color: white;">
+            <div class="stat-label" style="color: rgba(255,255,255,0.7);">Saldo Actual</div>
+            <div class="stat-value" style="color: white;">${{ rubro.saldo_actual|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla Kardex -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-journal-text me-2"></i>Movimientos Cronologicos
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Documento</th>
+                        <th class="text-end">Debito</th>
+                        <th class="text-end">Credito</th>
+                        <th class="text-end">Saldo</th>
+                        <th>Observaciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in movimientos_con_saldo %}
+                    <tr {% if item.mov.anulado %}class="table-secondary text-decoration-line-through"{% endif %}>
+                        <td>{{ item.mov.fecha|date:"d/m/Y" }}</td>
+                        <td>
+                            <span class="badge {% if item.mov.anulado %}bg-secondary{% elif item.mov.tipo == 'INICIAL' %}bg-primary{% elif item.mov.tipo == 'ADICION' %}bg-success{% elif item.mov.tipo == 'REDUCCION' %}bg-danger{% elif item.mov.tipo == 'CREDITO' %}bg-info{% else %}bg-warning{% endif %}">
+                                {{ item.mov.get_tipo_display }}
+                            </span>
+                        </td>
+                        <td>{{ item.mov.documento_soporte }}</td>
+                        <td class="text-end currency">
+                            {% if item.mov.tipo in 'REDUCCION,CONTRACREDITO' %}
+                            ${{ item.mov.valor|floatformat:0|intcomma }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td class="text-end currency">
+                            {% if item.mov.tipo in 'INICIAL,ADICION,CREDITO' %}
+                            ${{ item.mov.valor|floatformat:0|intcomma }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td class="text-end currency fw-bold">
+                            {% if item.saldo is not None %}
+                            ${{ item.saldo|floatformat:0|intcomma }}
+                            {% else %}
+                            <span class="text-muted">ANULADO</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ item.mov.observaciones|truncatewords:5 }}</small>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            No hay movimientos para este rubro
+                            <br>
+                            <a href="{% url 'planfinanciero:gastos_movimiento_crear' %}?rubro={{ rubro.codigo }}" class="btn btn-primary mt-3">
+                                <i class="bi bi-plus-lg me-2"></i>Registrar movimiento
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a href="{% url 'planfinanciero:gastos_dashboard' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Volver al Dashboard
+    </a>
+</div>
+{% endblock %}

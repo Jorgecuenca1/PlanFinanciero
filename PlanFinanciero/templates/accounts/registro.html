@@ -1,0 +1,354 @@
+{% extends 'base.html' %}
+{% block title %}Crear Cuenta - Plan Financiero{% endblock %}
+
+{% block body %}
+<style>
+    .auth-container {
+        min-height: 100vh;
+        display: flex;
+    }
+
+    .auth-sidebar {
+        width: 45%;
+        background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 4rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .auth-sidebar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .auth-sidebar-content {
+        position: relative;
+        z-index: 10;
+    }
+
+    .auth-sidebar h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-sidebar p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.1rem;
+        line-height: 1.7;
+    }
+
+    .auth-benefits {
+        margin-top: 3rem;
+    }
+
+    .auth-benefit {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .auth-benefit i {
+        color: #10b981;
+        margin-right: 0.75rem;
+        font-size: 1.25rem;
+    }
+
+    .auth-form-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: #f8fafc;
+    }
+
+    .auth-form {
+        width: 100%;
+        max-width: 450px;
+    }
+
+    .auth-form-header {
+        margin-bottom: 2rem;
+    }
+
+    .auth-form-header h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+    }
+
+    .auth-form-header p {
+        color: #64748b;
+    }
+
+    .form-floating {
+        margin-bottom: 1rem;
+    }
+
+    .form-floating .form-control {
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        padding: 1rem 0.75rem;
+        height: calc(3.5rem + 2px);
+    }
+
+    .form-floating label {
+        padding: 1rem 0.75rem;
+    }
+
+    .btn-auth {
+        width: 100%;
+        padding: 0.875rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .auth-divider {
+        display: flex;
+        align-items: center;
+        margin: 1.5rem 0;
+    }
+
+    .auth-divider::before,
+    .auth-divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .auth-divider span {
+        padding: 0 1rem;
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+
+    .auth-link {
+        text-align: center;
+        margin-top: 1.5rem;
+        color: #64748b;
+    }
+
+    .auth-link a {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .auth-link a:hover {
+        text-decoration: underline;
+    }
+
+    .back-home {
+        position: absolute;
+        top: 2rem;
+        left: 2rem;
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+        transition: color 0.2s;
+    }
+
+    .back-home:hover {
+        color: white;
+    }
+
+    .alert {
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .password-requirements {
+        background: #f1f5f9;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .password-requirements ul {
+        margin: 0.5rem 0 0 0;
+        padding-left: 1.25rem;
+    }
+
+    .form-error {
+        color: #dc2626;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+    }
+
+    @media (max-width: 992px) {
+        .auth-sidebar {
+            display: none;
+        }
+        .auth-form-container {
+            min-height: 100vh;
+        }
+    }
+</style>
+
+<div class="auth-container">
+    <!-- Sidebar -->
+    <div class="auth-sidebar">
+        <a href="{% url 'core:landing' %}" class="back-home">
+            <i class="bi bi-arrow-left me-2"></i>Volver al inicio
+        </a>
+
+        <div class="auth-sidebar-content">
+            <h1><i class="bi bi-graph-up-arrow me-3"></i>Plan Financiero</h1>
+            <p>Crea tu cuenta y comienza a gestionar el plan financiero de ingresos de tu departamento de manera profesional.</p>
+
+            <div class="auth-benefits">
+                <div class="auth-benefit">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Registro y control de movimientos presupuestales</span>
+                </div>
+                <div class="auth-benefit">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Calculo automatico de saldos en tiempo real</span>
+                </div>
+                <div class="auth-benefit">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Kardex e historial completo por rubro</span>
+                </div>
+                <div class="auth-benefit">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Exportacion a Excel para entes de control</span>
+                </div>
+                <div class="auth-benefit">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Validacion automatica de saldos (sin negativos)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="auth-form-container">
+        <div class="auth-form">
+            <div class="auth-form-header">
+                <h2>Crear una cuenta</h2>
+                <p>Completa el formulario para comenzar</p>
+            </div>
+
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
+                                   id="first_name" name="first_name" placeholder="Nombre"
+                                   value="{{ form.first_name.value|default:'' }}" required>
+                            <label for="first_name">Nombre</label>
+                            {% if form.first_name.errors %}
+                            <div class="form-error">{{ form.first_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
+                                   id="last_name" name="last_name" placeholder="Apellido"
+                                   value="{{ form.last_name.value|default:'' }}" required>
+                            <label for="last_name">Apellido</label>
+                            {% if form.last_name.errors %}
+                            <div class="form-error">{{ form.last_name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-floating">
+                    <input type="text" class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+                           id="username" name="username" placeholder="Usuario"
+                           value="{{ form.username.value|default:'' }}" required>
+                    <label for="username"><i class="bi bi-person me-2"></i>Nombre de usuario</label>
+                    {% if form.username.errors %}
+                    <div class="form-error">{{ form.username.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-floating">
+                    <input type="email" class="form-control {% if form.email.errors %}is-invalid{% endif %}"
+                           id="email" name="email" placeholder="correo@ejemplo.com"
+                           value="{{ form.email.value|default:'' }}" required>
+                    <label for="email"><i class="bi bi-envelope me-2"></i>Correo electronico</label>
+                    {% if form.email.errors %}
+                    <div class="form-error">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-floating">
+                    <input type="password" class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
+                           id="password1" name="password1" placeholder="Contrasena" required>
+                    <label for="password1"><i class="bi bi-lock me-2"></i>Contrasena</label>
+                    {% if form.password1.errors %}
+                    <div class="form-error">{{ form.password1.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-floating">
+                    <input type="password" class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
+                           id="password2" name="password2" placeholder="Confirmar" required>
+                    <label for="password2"><i class="bi bi-lock-fill me-2"></i>Confirmar contrasena</label>
+                    {% if form.password2.errors %}
+                    <div class="form-error">{{ form.password2.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="password-requirements">
+                    <strong>La contrasena debe:</strong>
+                    <ul>
+                        <li>Tener al menos 8 caracteres</li>
+                        <li>No ser completamente numerica</li>
+                        <li>No ser una contrasena comun</li>
+                    </ul>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-auth">
+                    <i class="bi bi-person-plus me-2"></i>Crear Cuenta
+                </button>
+            </form>
+
+            <div class="auth-divider">
+                <span>o</span>
+            </div>
+
+            <div class="auth-link">
+                ¿Ya tienes una cuenta? <a href="{% url 'accounts:login' %}">Inicia sesion</a>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="{% url 'core:landing' %}" class="text-muted text-decoration-none">
+                    <i class="bi bi-house me-1"></i>Volver al inicio
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

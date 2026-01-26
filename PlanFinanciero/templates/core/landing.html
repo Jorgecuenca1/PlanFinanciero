@@ -1,0 +1,482 @@
+{% extends 'base.html' %}
+{% block title %}Plan Financiero - Sistema de Gestión Presupuestal{% endblock %}
+
+{% block body %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .navbar-landing {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        padding: 1.5rem 0;
+    }
+
+    .navbar-landing .nav-link {
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+    }
+
+    .navbar-landing .nav-link:hover {
+        color: white;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 10;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: white;
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 2rem;
+        max-width: 500px;
+    }
+
+    .btn-hero {
+        padding: 0.875rem 2rem;
+        font-weight: 600;
+        font-size: 1rem;
+        border-radius: 0.5rem;
+        transition: all 0.3s;
+    }
+
+    .btn-hero-primary {
+        background: white;
+        color: #1e3a5f;
+        border: none;
+    }
+
+    .btn-hero-primary:hover {
+        background: #f1f5f9;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-hero-outline {
+        background: transparent;
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-hero-outline:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: white;
+        color: white;
+    }
+
+    .features-section {
+        padding: 6rem 0;
+        background: #f8fafc;
+    }
+
+    .section-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #0f172a;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .section-subtitle {
+        color: #64748b;
+        text-align: center;
+        max-width: 600px;
+        margin: 0 auto 4rem;
+        font-size: 1.1rem;
+    }
+
+    .feature-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        height: 100%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s;
+        border: 1px solid #e2e8f0;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .feature-icon-blue { background: #dbeafe; color: #2563eb; }
+    .feature-icon-green { background: #dcfce7; color: #16a34a; }
+    .feature-icon-purple { background: #f3e8ff; color: #9333ea; }
+    .feature-icon-orange { background: #ffedd5; color: #ea580c; }
+
+    .feature-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 0.75rem;
+    }
+
+    .feature-text {
+        color: #64748b;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+
+    .cta-section {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        padding: 5rem 0;
+    }
+
+    .cta-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 1rem;
+    }
+
+    .cta-text {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+
+    .footer {
+        background: #0f172a;
+        padding: 3rem 0;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .stats-row {
+        display: flex;
+        gap: 3rem;
+        margin-top: 3rem;
+    }
+
+    .stat-item {
+        text-align: left;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+    }
+
+    .stat-text {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.9rem;
+    }
+
+    .hero-image {
+        position: relative;
+    }
+
+    .dashboard-preview {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+    }
+
+    .dashboard-header {
+        background: #f8fafc;
+        padding: 0.75rem 1rem;
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .dashboard-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+
+    .dashboard-body {
+        padding: 1.5rem;
+    }
+
+    .mini-stat {
+        background: #f1f5f9;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .mini-stat-label {
+        font-size: 0.7rem;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+
+    .mini-stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    @media (max-width: 992px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        .hero-image {
+            display: none;
+        }
+        .stats-row {
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+    }
+</style>
+
+<!-- Navbar -->
+<nav class="navbar-landing">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="/" class="text-white text-decoration-none">
+                <h5 class="mb-0 fw-bold">
+                    <i class="bi bi-graph-up-arrow me-2"></i>Plan Financiero
+                </h5>
+            </a>
+            <div class="d-flex gap-3">
+                {% if user.is_authenticated %}
+                <a href="{% url 'planfinanciero:dashboard' %}" class="btn btn-hero btn-hero-primary">
+                    <i class="bi bi-speedometer2 me-2"></i>Ir al Dashboard
+                </a>
+                {% else %}
+                <a href="{% url 'accounts:login' %}" class="btn btn-hero btn-hero-outline">
+                    Iniciar Sesion
+                </a>
+                <a href="{% url 'accounts:registro' %}" class="btn btn-hero btn-hero-primary">
+                    Registrarse
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <div class="hero-content">
+                    <h1 class="hero-title">
+                        Gestion del Plan<br>Financiero de<br>Ingresos
+                    </h1>
+                    <p class="hero-subtitle">
+                        Sistema integral para la administracion, control y trazabilidad de las modificaciones al Plan Financiero del Departamento.
+                    </p>
+                    <div class="d-flex gap-3 flex-wrap">
+                        {% if user.is_authenticated %}
+                        <a href="{% url 'planfinanciero:dashboard' %}" class="btn btn-hero btn-hero-primary">
+                            <i class="bi bi-speedometer2 me-2"></i>Ir al Dashboard
+                        </a>
+                        {% else %}
+                        <a href="{% url 'accounts:registro' %}" class="btn btn-hero btn-hero-primary">
+                            <i class="bi bi-person-plus me-2"></i>Comenzar Ahora
+                        </a>
+                        <a href="{% url 'accounts:login' %}" class="btn btn-hero btn-hero-outline">
+                            Ya tengo cuenta
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <div class="stat-number">100%</div>
+                            <div class="stat-text">Trazabilidad</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">Real</div>
+                            <div class="stat-text">Tiempo</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">Seguro</div>
+                            <div class="stat-text">Auditoria</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-image">
+                    <div class="dashboard-preview">
+                        <div class="dashboard-header">
+                            <div class="dashboard-dot dot-red"></div>
+                            <div class="dashboard-dot dot-yellow"></div>
+                            <div class="dashboard-dot dot-green"></div>
+                        </div>
+                        <div class="dashboard-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="mini-stat">
+                                        <div class="mini-stat-label">Presupuesto Inicial</div>
+                                        <div class="mini-stat-value text-primary">$1.250M</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mini-stat">
+                                        <div class="mini-stat-label">Adiciones</div>
+                                        <div class="mini-stat-value text-success">+$320M</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mini-stat">
+                                        <div class="mini-stat-label">Reducciones</div>
+                                        <div class="mini-stat-value text-danger">-$85M</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mini-stat">
+                                        <div class="mini-stat-label">Saldo Actual</div>
+                                        <div class="mini-stat-value">$1.485M</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3 p-3 bg-light rounded">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <small class="text-muted">Ejecucion Presupuestal</small>
+                                    <small class="fw-bold">78%</small>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-primary" style="width: 78%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <h2 class="section-title">Funcionalidades Principales</h2>
+        <p class="section-subtitle">
+            Todo lo que necesitas para gestionar eficientemente el plan financiero de ingresos de tu departamento.
+        </p>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon-blue">
+                        <i class="bi bi-database"></i>
+                    </div>
+                    <h3 class="feature-title">Catalogo de Rubros</h3>
+                    <p class="feature-text">
+                        Administra la estructura presupuestal base con codigos unicos, fuentes de financiacion y tipos de recursos.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon-green">
+                        <i class="bi bi-arrow-left-right"></i>
+                    </div>
+                    <h3 class="feature-title">Registro de Operaciones</h3>
+                    <p class="feature-text">
+                        Registra adiciones, reducciones y traslados con documentos soporte y trazabilidad completa.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon-purple">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h3 class="feature-title">Control de Saldos</h3>
+                    <p class="feature-text">
+                        El sistema valida automaticamente que no se generen saldos negativos en ningun rubro.
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon-orange">
+                        <i class="bi bi-file-earmark-spreadsheet"></i>
+                    </div>
+                    <h3 class="feature-title">Reportes y Exportacion</h3>
+                    <p class="feature-text">
+                        Genera reportes de ejecucion, kardex por rubro y exporta a Excel para entes de control.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container text-center">
+        <h2 class="cta-title">Comienza a gestionar tu presupuesto hoy</h2>
+        <p class="cta-text">
+            Deja atras las hojas de calculo con columnas infinitas.<br>
+            Moderniza tu gestion financiera con un sistema profesional.
+        </p>
+        {% if not user.is_authenticated %}
+        <a href="{% url 'accounts:registro' %}" class="btn btn-hero btn-hero-primary btn-lg">
+            <i class="bi bi-rocket-takeoff me-2"></i>Crear Cuenta Gratis
+        </a>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="text-white mb-1">
+                    <i class="bi bi-graph-up-arrow me-2"></i>Plan Financiero
+                </h5>
+                <p class="mb-0 small">Sistema de Gestion del Plan Financiero de Ingresos</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p class="mb-0 small">&copy; 2025 - Todos los derechos reservados</p>
+            </div>
+        </div>
+    </div>
+</footer>
+{% endblock %}

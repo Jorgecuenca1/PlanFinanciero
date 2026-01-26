@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Django
+*.log
+local_settings.py
+staticfiles/
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.docker
+
+# Misc
+.DS_Store
+*.sqlite3
+.env
+*.bak

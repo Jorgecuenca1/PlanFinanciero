@@ -1,0 +1,163 @@
+{% extends 'planfinanciero/base_app.html' %}
+{% load humanize %}
+
+{% block title %}Movimientos - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Movimientos</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="page-title">Movimientos</h1>
+        <p class="page-subtitle">Registro de operaciones presupuestales</p>
+    </div>
+    <a href="{% url 'planfinanciero:movimiento_crear' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Nuevo Movimiento
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-2">
+                <label class="form-label">Tipo</label>
+                <select name="tipo" class="form-select">
+                    <option value="">Todos</option>
+                    {% for value, label in tipos_movimiento %}
+                    <option value="{{ value }}" {% if tipo == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Codigo Rubro</label>
+                <input type="text" name="rubro_codigo" class="form-control" placeholder="Buscar por codigo..." value="{{ rubro_codigo }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Fecha desde</label>
+                <input type="date" name="fecha_desde" class="form-control" value="{{ fecha_desde }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Fecha hasta</label>
+                <input type="date" name="fecha_hasta" class="form-control" value="{{ fecha_hasta }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="form-check mt-2">
+                    <input class="form-check-input" type="checkbox" name="anulados" value="1" id="anulados" {% if mostrar_anulados %}checked{% endif %}>
+                    <label class="form-check-label" for="anulados">Incluir anulados</label>
+                </div>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-secondary w-100">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Rubro</th>
+                        <th>Documento Soporte</th>
+                        <th class="text-end">Valor</th>
+                        <th>Registrado por</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mov in movimientos %}
+                    <tr {% if mov.anulado %}class="table-secondary"{% endif %}>
+                        <td>{{ mov.fecha|date:"d/m/Y" }}</td>
+                        <td>
+                            <span class="badge badge-tipo {% if mov.anulado %}badge-anulado{% elif mov.tipo == 'INICIAL' %}badge-inicial{% elif mov.tipo == 'ADICION' %}badge-adicion{% elif mov.tipo == 'REDUCCION' %}badge-reduccion{% else %}badge-traslado{% endif %}">
+                                {{ mov.get_tipo_display }}
+                            </span>
+                            {% if mov.anulado %}
+                            <span class="badge bg-secondary ms-1">ANULADO</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'planfinanciero:rubro_detalle' mov.rubro.pk %}" class="text-decoration-none">
+                                {{ mov.rubro.codigo }}
+                            </a>
+                        </td>
+                        <td>{{ mov.documento_soporte }}</td>
+                        <td class="text-end currency {% if mov.tipo in 'REDUCCION,TRASLADO_DEBITO' %}currency-negative{% else %}currency-positive{% endif %}">
+                            {% if mov.tipo in 'REDUCCION,TRASLADO_DEBITO' %}-{% else %}+{% endif %}${{ mov.valor|floatformat:0|intcomma }}
+                        </td>
+                        <td>{{ mov.registrado_por.get_full_name|default:mov.registrado_por.username }}</td>
+                        <td class="text-center">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'planfinanciero:movimiento_detalle' mov.pk %}" class="btn btn-outline-primary" title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if not mov.anulado %}
+                                <a href="{% url 'planfinanciero:movimiento_anular' mov.pk %}" class="btn btn-outline-danger" title="Anular">
+                                    <i class="bi bi-x-circle"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                            No hay movimientos registrados
+                            <br>
+                            <a href="{% url 'planfinanciero:movimiento_crear' %}" class="btn btn-primary mt-3">
+                                <i class="bi bi-plus-lg me-2"></i>Registrar primer movimiento
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Paginación -->
+{% if movimientos.has_other_pages %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if movimientos.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ movimientos.previous_page_number }}&tipo={{ tipo }}&rubro_codigo={{ rubro_codigo }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&anulados={% if mostrar_anulados %}1{% endif %}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+        {% endif %}
+
+        {% for num in movimientos.paginator.page_range %}
+        {% if movimientos.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num > movimientos.number|add:'-3' and num < movimientos.number|add:'3' %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ num }}&tipo={{ tipo }}&rubro_codigo={{ rubro_codigo }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&anulados={% if mostrar_anulados %}1{% endif %}">{{ num }}</a>
+        </li>
+        {% endif %}
+        {% endfor %}
+
+        {% if movimientos.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ movimientos.next_page_number }}&tipo={{ tipo }}&rubro_codigo={{ rubro_codigo }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&anulados={% if mostrar_anulados %}1{% endif %}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

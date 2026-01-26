@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    container_name: planfinanciero_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+      - sqlite_data:/app/data
+    environment:
+      - DEBUG=0
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - ALLOWED_HOSTS=pf.corpofuturo.org,localhost,127.0.0.1
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput --clear &&
+             python manage.py runserver 0.0.0.0:8000"
+
+  https-portal:
+    image: steveltn/https-portal:1
+    container_name: planfinanciero_https
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      DOMAINS: 'pf.corpofuturo.org -> http://backend:8000'
+      STAGE: 'production'
+      CLIENT_MAX_BODY_SIZE: 10M
+    volumes:
+      - https-portal-data:/var/lib/https-portal
+    depends_on:
+      - backend
+
+volumes:
+  https-portal-data:
+  static_volume:
+  sqlite_data:

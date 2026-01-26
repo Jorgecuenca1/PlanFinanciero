@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+{% block title %}Iniciar Sesion - Plan Financiero{% endblock %}
+
+{% block body %}
+<style>
+    .auth-container {
+        min-height: 100vh;
+        display: flex;
+    }
+
+    .auth-sidebar {
+        width: 45%;
+        background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 4rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .auth-sidebar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .auth-sidebar-content {
+        position: relative;
+        z-index: 10;
+    }
+
+    .auth-sidebar h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-sidebar p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.1rem;
+        line-height: 1.7;
+    }
+
+    .auth-features {
+        margin-top: 3rem;
+    }
+
+    .auth-feature {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-feature-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 0.5rem;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .auth-feature-text h4 {
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .auth-feature-text p {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.85rem;
+        margin: 0;
+    }
+
+    .auth-form-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: #f8fafc;
+    }
+
+    .auth-form {
+        width: 100%;
+        max-width: 420px;
+    }
+
+    .auth-form-header {
+        margin-bottom: 2rem;
+    }
+
+    .auth-form-header h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+    }
+
+    .auth-form-header p {
+        color: #64748b;
+    }
+
+    .form-floating {
+        margin-bottom: 1rem;
+    }
+
+    .form-floating .form-control {
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        padding: 1rem 0.75rem;
+        height: calc(3.5rem + 2px);
+    }
+
+    .form-floating label {
+        padding: 1rem 0.75rem;
+    }
+
+    .btn-auth {
+        width: 100%;
+        padding: 0.875rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .auth-divider {
+        display: flex;
+        align-items: center;
+        margin: 1.5rem 0;
+    }
+
+    .auth-divider::before,
+    .auth-divider::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .auth-divider span {
+        padding: 0 1rem;
+        color: #94a3b8;
+        font-size: 0.85rem;
+    }
+
+    .auth-link {
+        text-align: center;
+        margin-top: 1.5rem;
+        color: #64748b;
+    }
+
+    .auth-link a {
+        color: #2563eb;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .auth-link a:hover {
+        text-decoration: underline;
+    }
+
+    .back-home {
+        position: absolute;
+        top: 2rem;
+        left: 2rem;
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        font-size: 0.9rem;
+        transition: color 0.2s;
+    }
+
+    .back-home:hover {
+        color: white;
+    }
+
+    .alert {
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 992px) {
+        .auth-sidebar {
+            display: none;
+        }
+        .auth-form-container {
+            min-height: 100vh;
+        }
+    }
+</style>
+
+<div class="auth-container">
+    <!-- Sidebar -->
+    <div class="auth-sidebar">
+        <a href="{% url 'core:landing' %}" class="back-home">
+            <i class="bi bi-arrow-left me-2"></i>Volver al inicio
+        </a>
+
+        <div class="auth-sidebar-content">
+            <h1><i class="bi bi-graph-up-arrow me-3"></i>Plan Financiero</h1>
+            <p>Sistema de Gestion del Plan Financiero de Ingresos para el control y trazabilidad de modificaciones presupuestales.</p>
+
+            <div class="auth-features">
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <div class="auth-feature-text">
+                        <h4>Seguro y Confiable</h4>
+                        <p>Tus datos estan protegidos con las mejores practicas de seguridad.</p>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="auth-feature-text">
+                        <h4>Trazabilidad Completa</h4>
+                        <p>Registro de todas las operaciones para auditoria.</p>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <div class="auth-feature-icon">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <div class="auth-feature-text">
+                        <h4>Tiempo Real</h4>
+                        <p>Saldos actualizados automaticamente con cada operacion.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="auth-form-container">
+        <div class="auth-form">
+            <div class="auth-form-header">
+                <h2>Bienvenido de nuevo</h2>
+                <p>Ingresa tus credenciales para acceder al sistema</p>
+            </div>
+
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-floating">
+                    <input type="text" class="form-control" id="username" name="username" placeholder="Usuario" required>
+                    <label for="username"><i class="bi bi-person me-2"></i>Usuario</label>
+                </div>
+                <div class="form-floating">
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Contrasena" required>
+                    <label for="password"><i class="bi bi-lock me-2"></i>Contrasena</label>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                        <label class="form-check-label" for="remember">Recordarme</label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-auth">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesion
+                </button>
+            </form>
+
+            <div class="auth-divider">
+                <span>o</span>
+            </div>
+
+            <div class="auth-link">
+                ¿No tienes una cuenta? <a href="{% url 'accounts:registro' %}">Registrate aqui</a>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="{% url 'core:landing' %}" class="text-muted text-decoration-none">
+                    <i class="bi bi-house me-1"></i>Volver al inicio
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends 'planfinanciero/base_app.html' %}
+{% load humanize %}
+
+{% block title %}Reporte de Ejecucion - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:reportes' %}">Reportes</a></li>
+<li class="breadcrumb-item active">Ejecucion Presupuestal</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <h1 class="page-title">Reporte de Ejecucion Presupuestal</h1>
+        <p class="page-subtitle">Vista consolidada del estado de todos los rubros de detalle</p>
+    </div>
+    <a href="{% url 'planfinanciero:exportar_excel' %}" class="btn btn-success">
+        <i class="bi bi-file-earmark-excel me-2"></i>Exportar a Excel
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Ingreso Agregado</label>
+                <select name="ingreso" class="form-select">
+                    <option value="">Todos los ingresos</option>
+                    {% for i in ingresos %}
+                    <option value="{{ i.id }}" {% if ingreso_id == i.id|stringformat:"s" %}selected{% endif %}>{{ i.codigo }} - {{ i.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Organo Ejecutor</label>
+                <select name="organo" class="form-select">
+                    <option value="">Todos los organos</option>
+                    {% for o in organos %}
+                    <option value="{{ o.id }}" {% if organo_id == o.id|stringformat:"s" %}selected{% endif %}>{{ o.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Nivel</label>
+                <select name="nivel" class="form-select">
+                    <option value="">Todos los niveles</option>
+                    <option value="AC" {% if nivel == 'AC' %}selected{% endif %}>Administracion Central</option>
+                    <option value="EP" {% if nivel == 'EP' %}selected{% endif %}>Establecimientos Publicos</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-secondary w-100">
+                    <i class="bi bi-filter me-2"></i>Aplicar Filtros
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Totales -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Presupuesto Inicial</div>
+            <div class="stat-value text-primary">${{ total_inicial|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Total Adiciones</div>
+            <div class="stat-value text-success">+${{ total_adiciones|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-label">Total Reducciones</div>
+            <div class="stat-value text-danger">-${{ total_reducciones|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #1e3a5f, #0f172a); color: white;">
+            <div class="stat-label" style="color: rgba(255,255,255,0.7);">Saldo Definitivo</div>
+            <div class="stat-value" style="color: white;">${{ total_saldo|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de Ejecucion -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-table me-2"></i>Detalle por Rubro
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Codigo</th>
+                        <th>Nombre</th>
+                        <th>Ingreso</th>
+                        <th>Organo</th>
+                        <th class="text-end">P. Inicial</th>
+                        <th class="text-end">Adiciones</th>
+                        <th class="text-end">Reducciones</th>
+                        <th class="text-end">Saldo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rubro in rubros %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'planfinanciero:rubro_kardex' rubro.pk %}" class="text-decoration-none fw-medium">
+                                {{ rubro.codigo|truncatechars:25 }}
+                            </a>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 200px;" title="{{ rubro.nombre }}">
+                                {{ rubro.nombre }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if rubro.ingreso_agregado %}
+                            <span class="badge bg-light text-dark">{{ rubro.ingreso_agregado.codigo }}</span>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if rubro.organo_ejecutor %}
+                            <small>{{ rubro.organo_ejecutor.nombre|truncatewords:2 }}</small>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td class="text-end currency">${{ rubro.presupuesto_inicial|floatformat:0|intcomma }}</td>
+                        <td class="text-end currency currency-positive">${{ rubro.total_adiciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end currency currency-negative">${{ rubro.total_reducciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end currency fw-bold">${{ rubro.saldo_actual|floatformat:0|intcomma }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-5">
+                            No hay rubros que mostrar con los filtros seleccionados
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if rubros %}
+                <tfoot class="table-light fw-bold">
+                    <tr>
+                        <td colspan="4">TOTALES</td>
+                        <td class="text-end">${{ total_inicial|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-success">${{ total_adiciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end text-danger">${{ total_reducciones|floatformat:0|intcomma }}</td>
+                        <td class="text-end">${{ total_saldo|floatformat:0|intcomma }}</td>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Paginacion -->
+{% if rubros.has_other_pages %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if rubros.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ rubros.previous_page_number }}&ingreso={{ ingreso_id }}&organo={{ organo_id }}&nivel={{ nivel }}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+        {% endif %}
+
+        {% for num in rubros.paginator.page_range %}
+        {% if rubros.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num > rubros.number|add:'-3' and num < rubros.number|add:'3' %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ num }}&ingreso={{ ingreso_id }}&organo={{ organo_id }}&nivel={{ nivel }}">{{ num }}</a>
+        </li>
+        {% endif %}
+        {% endfor %}
+
+        {% if rubros.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ rubros.next_page_number }}&ingreso={{ ingreso_id }}&organo={{ organo_id }}&nivel={{ nivel }}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<!-- Resumen de paginacion -->
+<div class="card mt-4">
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-4">
+                <small class="text-muted">Total Rubros</small>
+                <h5>{{ rubros.paginator.count }}</h5>
+            </div>
+            <div class="col-md-4">
+                <small class="text-muted">Pagina</small>
+                <h5>{{ rubros.number }} de {{ rubros.paginator.num_pages }}</h5>
+            </div>
+            <div class="col-md-4">
+                <small class="text-muted">Saldo Total</small>
+                <h5>${{ total_saldo|floatformat:0|intcomma }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

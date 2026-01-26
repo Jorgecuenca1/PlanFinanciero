@@ -1,0 +1,110 @@
+{% extends 'planfinanciero/base_app.html' %}
+
+{% block title %}{{ titulo }} - Plan Financiero{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'planfinanciero:rubros_lista' %}">Rubros</a></li>
+<li class="breadcrumb-item active">{{ titulo }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-database me-2"></i>{{ titulo }}
+            </div>
+            <div class="card-body">
+                {% if tiene_movimientos %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Atencion:</strong> Este rubro tiene movimientos asociados. El codigo no puede ser modificado para mantener la integridad de los datos.
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="id_codigo" class="form-label">Codigo Presupuestal *</label>
+                                {{ form.codigo }}
+                                {% if form.codigo.errors %}
+                                <div class="text-danger small mt-1">{{ form.codigo.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Codigo unico e irrepetible</div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="id_nombre" class="form-label">Nombre del Concepto *</label>
+                                {{ form.nombre }}
+                                {% if form.nombre.errors %}
+                                <div class="text-danger small mt-1">{{ form.nombre.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="id_fuente" class="form-label">Fuente de Financiacion *</label>
+                                {{ form.fuente }}
+                                {% if form.fuente.errors %}
+                                <div class="text-danger small mt-1">{{ form.fuente.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="id_nivel" class="form-label">Nivel *</label>
+                                {{ form.nivel }}
+                                {% if form.nivel.errors %}
+                                <div class="text-danger small mt-1">{{ form.nivel.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="id_tipo_recurso" class="form-label">Tipo de Recurso *</label>
+                                {{ form.tipo_recurso }}
+                                {% if form.tipo_recurso.errors %}
+                                <div class="text-danger small mt-1">{{ form.tipo_recurso.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_descripcion" class="form-label">Descripcion</label>
+                        {{ form.descripcion }}
+                        {% if form.descripcion.errors %}
+                        <div class="text-danger small mt-1">{{ form.descripcion.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="form-check">
+                            {{ form.activo }}
+                            <label class="form-check-label" for="id_activo">Rubro activo</label>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'planfinanciero:rubros_lista' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-2"></i>{{ accion }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
