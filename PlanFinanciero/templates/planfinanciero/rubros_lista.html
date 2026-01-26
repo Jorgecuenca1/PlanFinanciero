@@ -8,12 +8,12 @@
 {% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-start mb-4">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
     <div>
         <h1 class="page-title">Rubros Presupuestales</h1>
-        <p class="page-subtitle">Catalogo de rubros del plan financiero de ingresos</p>
+        <p class="page-subtitle mb-0">Catalogo de rubros del plan financiero de ingresos</p>
     </div>
-    <a href="{% url 'planfinanciero:rubro_crear' %}" class="btn btn-primary">
+    <a href="{% url 'planfinanciero:rubro_crear' %}" class="btn btn-primary flex-shrink-0">
         <i class="bi bi-plus-lg me-2"></i>Nuevo Rubro
     </a>
 </div>
@@ -76,51 +76,51 @@
                 <thead>
                     <tr>
                         <th>Codigo</th>
-                        <th>Nombre</th>
-                        <th>Ingreso</th>
-                        <th>Organo</th>
-                        <th class="text-center">Tipo</th>
-                        <th class="text-end">P. Inicial</th>
-                        <th class="text-end">Saldo Actual</th>
-                        <th class="text-center">Acciones</th>
+                        <th class="d-none d-md-table-cell">Nombre</th>
+                        <th class="d-none d-lg-table-cell">Ingreso</th>
+                        <th class="d-none d-lg-table-cell">Organo</th>
+                        <th class="text-center d-none d-sm-table-cell">Tipo</th>
+                        <th class="text-end d-none d-sm-table-cell">P. Inicial</th>
+                        <th class="text-end">Saldo</th>
+                        <th class="text-center">Acc.</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for rubro in rubros %}
                     <tr class="{% if rubro.es_totalizador %}table-light{% endif %}">
                         <td>
-                            <a href="{% url 'planfinanciero:rubro_detalle' rubro.pk %}" class="fw-medium text-decoration-none">
-                                {{ rubro.codigo|truncatechars:30 }}
+                            <a href="{% url 'planfinanciero:rubro_detalle' rubro.pk %}" class="fw-medium text-decoration-none text-truncate-responsive d-block">
+                                {{ rubro.codigo|truncatechars:25 }}
                             </a>
                         </td>
-                        <td>
-                            <div class="text-truncate" style="max-width: 200px;" title="{{ rubro.nombre }}">
+                        <td class="d-none d-md-table-cell">
+                            <div class="text-truncate" style="max-width: 180px;" title="{{ rubro.nombre }}">
                                 {% if rubro.es_totalizador %}<i class="bi bi-folder me-1 text-warning"></i>{% endif %}
                                 {{ rubro.nombre }}
                             </div>
                         </td>
-                        <td>
+                        <td class="d-none d-lg-table-cell">
                             {% if rubro.ingreso_agregado %}
                             <span class="badge bg-light text-dark">{{ rubro.ingreso_agregado.codigo }}</span>
                             {% else %}
                             <span class="text-muted">-</span>
                             {% endif %}
                         </td>
-                        <td>
+                        <td class="d-none d-lg-table-cell">
                             {% if rubro.organo_ejecutor %}
                             <small>{{ rubro.organo_ejecutor.nombre|truncatewords:2 }}</small>
                             {% else %}
                             <span class="text-muted">-</span>
                             {% endif %}
                         </td>
-                        <td class="text-center">
+                        <td class="text-center d-none d-sm-table-cell">
                             {% if rubro.es_totalizador %}
-                            <span class="badge bg-secondary">Total</span>
+                            <span class="badge bg-secondary">T</span>
                             {% else %}
                             <span class="badge bg-primary">{{ rubro.nivel|default:"-" }}</span>
                             {% endif %}
                         </td>
-                        <td class="text-end currency">${{ rubro.presupuesto_inicial|floatformat:0|intcomma }}</td>
+                        <td class="text-end currency d-none d-sm-table-cell">${{ rubro.presupuesto_inicial|floatformat:0|intcomma }}</td>
                         <td class="text-end currency fw-bold">${{ rubro.saldo_actual|floatformat:0|intcomma }}</td>
                         <td class="text-center">
                             <div class="btn-group btn-group-sm">
@@ -128,7 +128,7 @@
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 {% if not rubro.es_totalizador %}
-                                <a href="{% url 'planfinanciero:rubro_kardex' rubro.pk %}" class="btn btn-outline-secondary" title="Ver Kardex">
+                                <a href="{% url 'planfinanciero:rubro_kardex' rubro.pk %}" class="btn btn-outline-secondary d-none d-sm-inline-block" title="Ver Kardex">
                                     <i class="bi bi-journal-text"></i>
                                 </a>
                                 <a href="{% url 'planfinanciero:movimiento_crear' %}?rubro={{ rubro.pk }}" class="btn btn-outline-success" title="Agregar movimiento">

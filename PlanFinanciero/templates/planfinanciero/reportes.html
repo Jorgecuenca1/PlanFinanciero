@@ -67,34 +67,34 @@
 
         <!-- Tablas Dinamicas Ingresos -->
         <h6 class="mt-4 mb-3"><i class="bi bi-table me-2"></i>Tablas Dinamicas de Ingresos</h6>
-        <div class="row g-3">
-            <div class="col-md-4 col-lg-2">
-                <a href="{% url 'planfinanciero:reporte_por_nivel' %}" class="btn btn-outline-info w-100">
-                    <i class="bi bi-layers me-1"></i>Por Nivel
+        <div class="row g-2">
+            <div class="col-6 col-sm-4 col-lg-2">
+                <a href="{% url 'planfinanciero:reporte_por_nivel' %}" class="btn btn-outline-info w-100 btn-sm">
+                    <i class="bi bi-layers me-1"></i><span class="d-none d-sm-inline">Por </span>Nivel
                 </a>
             </div>
-            <div class="col-md-4 col-lg-2">
-                <a href="{% url 'planfinanciero:reporte_por_organo' %}" class="btn btn-outline-warning w-100">
-                    <i class="bi bi-building me-1"></i>Por Organo
+            <div class="col-6 col-sm-4 col-lg-2">
+                <a href="{% url 'planfinanciero:reporte_por_organo' %}" class="btn btn-outline-warning w-100 btn-sm">
+                    <i class="bi bi-building me-1"></i><span class="d-none d-sm-inline">Por </span>Organo
                 </a>
             </div>
-            <div class="col-md-4 col-lg-2">
-                <a href="{% url 'planfinanciero:reporte_por_ingreso' %}" class="btn btn-outline-success w-100">
-                    <i class="bi bi-cash-stack me-1"></i>Por Ingreso
+            <div class="col-6 col-sm-4 col-lg-2">
+                <a href="{% url 'planfinanciero:reporte_por_ingreso' %}" class="btn btn-outline-success w-100 btn-sm">
+                    <i class="bi bi-cash-stack me-1"></i><span class="d-none d-sm-inline">Por </span>Ingreso
                 </a>
             </div>
-            <div class="col-md-4 col-lg-2">
-                <a href="{% url 'planfinanciero:reporte_por_clase' %}" class="btn btn-outline-secondary w-100">
-                    <i class="bi bi-tags me-1"></i>Por Clase
+            <div class="col-6 col-sm-4 col-lg-2">
+                <a href="{% url 'planfinanciero:reporte_por_clase' %}" class="btn btn-outline-secondary w-100 btn-sm">
+                    <i class="bi bi-tags me-1"></i><span class="d-none d-sm-inline">Por </span>Clase
                 </a>
             </div>
-            <div class="col-md-4 col-lg-2">
-                <a href="{% url 'planfinanciero:reporte_por_tipo' %}" class="btn btn-outline-dark w-100">
-                    <i class="bi bi-list-check me-1"></i>Por Tipo
+            <div class="col-6 col-sm-4 col-lg-2">
+                <a href="{% url 'planfinanciero:reporte_por_tipo' %}" class="btn btn-outline-dark w-100 btn-sm">
+                    <i class="bi bi-list-check me-1"></i><span class="d-none d-sm-inline">Por </span>Tipo
                 </a>
             </div>
-            <div class="col-md-4 col-lg-2">
-                <a href="{% url 'planfinanciero:reporte_cruzado' %}" class="btn btn-outline-danger w-100">
+            <div class="col-6 col-sm-4 col-lg-2">
+                <a href="{% url 'planfinanciero:reporte_cruzado' %}" class="btn btn-outline-danger w-100 btn-sm">
                     <i class="bi bi-grid-3x3 me-1"></i>Cruzado
                 </a>
             </div>
@@ -156,20 +156,20 @@
 
         <!-- Kardex por Rubro de Gasto -->
         <h6 class="mt-4 mb-3"><i class="bi bi-journal-text me-2"></i>Kardex por Rubro de Gasto</h6>
-        <div class="row g-3">
-            <div class="col-md-4">
-                <a href="{% url 'planfinanciero:gastos_rubro_kardex' 'FUNCIONAMIENTO' %}" class="btn btn-outline-secondary w-100">
-                    <i class="bi bi-building me-1"></i>Funcionamiento
+        <div class="row g-2">
+            <div class="col-4">
+                <a href="{% url 'planfinanciero:gastos_rubro_kardex' 'FUNCIONAMIENTO' %}" class="btn btn-outline-secondary w-100 btn-sm">
+                    <i class="bi bi-building me-1"></i><span class="d-none d-sm-inline">Funcionam.</span><span class="d-sm-none">Func.</span>
                 </a>
             </div>
-            <div class="col-md-4">
-                <a href="{% url 'planfinanciero:gastos_rubro_kardex' 'DEUDA' %}" class="btn btn-outline-danger w-100">
+            <div class="col-4">
+                <a href="{% url 'planfinanciero:gastos_rubro_kardex' 'DEUDA' %}" class="btn btn-outline-danger w-100 btn-sm">
                     <i class="bi bi-credit-card me-1"></i>Deuda
                 </a>
             </div>
-            <div class="col-md-4">
-                <a href="{% url 'planfinanciero:gastos_rubro_kardex' 'INVERSION' %}" class="btn btn-outline-success w-100">
-                    <i class="bi bi-graph-up me-1"></i>Inversion
+            <div class="col-4">
+                <a href="{% url 'planfinanciero:gastos_rubro_kardex' 'INVERSION' %}" class="btn btn-outline-success w-100 btn-sm">
+                    <i class="bi bi-graph-up me-1"></i><span class="d-none d-sm-inline">Inversion</span><span class="d-sm-none">Inv.</span>
                 </a>
             </div>
         </div>
@@ -184,34 +184,34 @@
         <h5 class="mb-0"><i class="bi bi-clipboard-data me-2"></i>Resumen Consolidado</h5>
     </div>
     <div class="card-body">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="card bg-light mb-3">
-                    <div class="card-header">
+        <div class="row g-3">
+            <div class="col-12 col-md-6">
+                <div class="card bg-light mb-0">
+                    <div class="card-header py-2">
                         <i class="bi bi-arrow-down-circle text-success me-2"></i>Total Ingresos
                     </div>
-                    <div class="card-body">
-                        <h3 class="text-success">${{ total_ingresos|floatformat:0|intcomma }}</h3>
+                    <div class="card-body py-3">
+                        <h3 class="text-success mb-1" style="font-size: clamp(1.2rem, 4vw, 1.75rem);">${{ total_ingresos|floatformat:0|intcomma }}</h3>
                         <small class="text-muted">Presupuesto definitivo de ingresos</small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div class="card bg-light mb-3">
-                    <div class="card-header">
+            <div class="col-12 col-md-6">
+                <div class="card bg-light mb-0">
+                    <div class="card-header py-2">
                         <i class="bi bi-arrow-up-circle text-danger me-2"></i>Total Gastos
                     </div>
-                    <div class="card-body">
-                        <h3 class="text-danger">${{ total_gastos|floatformat:0|intcomma }}</h3>
+                    <div class="card-body py-3">
+                        <h3 class="text-danger mb-1" style="font-size: clamp(1.2rem, 4vw, 1.75rem);">${{ total_gastos|floatformat:0|intcomma }}</h3>
                         <small class="text-muted">Presupuesto definitivo de gastos</small>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="alert {% if diferencia >= 0 %}alert-success{% else %}alert-danger{% endif %}">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h5 class="mb-0">
+        <div class="alert {% if diferencia >= 0 %}alert-success{% else %}alert-danger{% endif %} mt-3 mb-0">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+                <div>
+                    <h5 class="mb-0" style="font-size: clamp(0.9rem, 3vw, 1.25rem);">
                         {% if diferencia >= 0 %}
                         <i class="bi bi-check-circle me-2"></i>Presupuesto Equilibrado
                         {% else %}
@@ -220,8 +220,8 @@
                     </h5>
                     <small>Diferencia: Ingresos - Gastos</small>
                 </div>
-                <div class="col-md-4 text-end">
-                    <h4 class="mb-0">${{ diferencia|floatformat:0|intcomma }}</h4>
+                <div class="text-sm-end">
+                    <h4 class="mb-0" style="font-size: clamp(1rem, 4vw, 1.5rem);">${{ diferencia|floatformat:0|intcomma }}</h4>
                 </div>
             </div>
         </div>
