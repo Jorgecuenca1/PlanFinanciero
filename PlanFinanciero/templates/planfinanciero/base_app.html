@@ -38,14 +38,22 @@
             <span>Nuevo Movimiento</span>
         </a>
 
-        <div class="nav-section">Plan Financiero Gastos</div>
-        <a href="{% url 'planfinanciero:gastos_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'gastos_dashboard' %}active{% endif %}">
-            <i class="bi bi-cash-stack"></i>
-            <span>Dashboard Gastos</span>
+        <div class="nav-section">Gastos Centralizados</div>
+        <a href="{% url 'planfinanciero:gastos_centralizados' %}" class="nav-link {% if request.resolver_match.url_name == 'gastos_centralizados' or request.resolver_match.url_name == 'gastos_dashboard' and tipo_entidad == 'CENTRALIZADO' %}active{% endif %}">
+            <i class="bi bi-building"></i>
+            <span>Centralizados</span>
         </a>
+
+        <div class="nav-section">Gastos Descentralizados</div>
+        <a href="{% url 'planfinanciero:gastos_descentralizados' %}" class="nav-link {% if request.resolver_match.url_name == 'gastos_descentralizados' or tipo_entidad == 'DESCENTRALIZADO' %}active{% endif %}">
+            <i class="bi bi-diagram-3"></i>
+            <span>Descentralizados</span>
+        </a>
+
+        <div class="nav-section">Movimientos Gastos</div>
         <a href="{% url 'planfinanciero:gastos_movimientos_lista' %}" class="nav-link {% if 'gastos_movimiento' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-list-ul"></i>
-            <span>Movimientos Gastos</span>
+            <span>Ver Movimientos</span>
         </a>
         <a href="{% url 'planfinanciero:gastos_movimiento_crear' %}" class="nav-link">
             <i class="bi bi-plus-circle"></i>

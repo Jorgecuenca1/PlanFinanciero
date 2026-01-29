@@ -50,14 +50,16 @@ urlpatterns = [
     path('api/rubros/buscar/', views.api_buscar_rubros, name='api_buscar_rubros'),
 
     # ==========================================
-    # PLAN FINANCIERO DE GASTOS
+    # PLAN FINANCIERO DE GASTOS - CENTRALIZADOS
     # ==========================================
     path('gastos/', views.gastos_dashboard, name='gastos_dashboard'),
+    path('gastos/centralizados/', views.gastos_dashboard, {'tipo_entidad': 'CENTRALIZADO'}, name='gastos_centralizados'),
+    path('gastos/descentralizados/', views.gastos_dashboard, {'tipo_entidad': 'DESCENTRALIZADO'}, name='gastos_descentralizados'),
     path('gastos/movimientos/', views.gastos_movimientos_lista, name='gastos_movimientos_lista'),
     path('gastos/movimientos/crear/', views.gastos_movimiento_crear, name='gastos_movimiento_crear'),
     path('gastos/movimientos/<int:pk>/', views.gastos_movimiento_detalle, name='gastos_movimiento_detalle'),
     path('gastos/movimientos/<int:pk>/anular/', views.gastos_movimiento_anular, name='gastos_movimiento_anular'),
-    path('gastos/rubro/<str:codigo>/kardex/', views.gastos_rubro_kardex, name='gastos_rubro_kardex'),
+    path('gastos/rubro/<str:tipo_entidad>/<str:codigo>/kardex/', views.gastos_rubro_kardex, name='gastos_rubro_kardex'),
     path('gastos/exportar-excel/', views.exportar_gastos_excel, name='exportar_gastos_excel'),
 
     # Reporte Comparativo

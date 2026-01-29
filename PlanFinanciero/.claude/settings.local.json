@@ -16,7 +16,8 @@
       "Bash(git reset:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(git remote set-url:*)"
+      "Bash(git remote set-url:*)",
+      "Bash(python crear_rubros_gasto.py:*)"
     ]
   }
 }

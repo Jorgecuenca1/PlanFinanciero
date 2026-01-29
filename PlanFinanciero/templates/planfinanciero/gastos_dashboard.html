@@ -10,12 +10,29 @@
 {% block content %}
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
     <div>
-        <h1 class="page-title">Plan Financiero de Gastos</h1>
-        <p class="page-subtitle mb-0">Resumen de los rubros: Funcionamiento, Deuda e Inversion</p>
+        <h1 class="page-title">Plan Financiero de Gastos - {{ tipo_entidad_display }}</h1>
+        <p class="page-subtitle mb-0">
+            {% if tipo_entidad == 'CENTRALIZADO' %}
+            Rubros: Funcionamiento, Deuda, Inversion
+            {% else %}
+            Rubros: Funcionamiento, Deuda, Inversion, Gastos de Operacion
+            {% endif %}
+        </p>
     </div>
-    <a href="{% url 'planfinanciero:gastos_movimiento_crear' %}" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-2"></i>Nuevo Movimiento
-    </a>
+    <div class="d-flex gap-2 flex-wrap">
+        {% if tipo_entidad == 'CENTRALIZADO' %}
+        <a href="{% url 'planfinanciero:gastos_descentralizados' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-right-circle me-1"></i>Ver Descentralizados
+        </a>
+        {% else %}
+        <a href="{% url 'planfinanciero:gastos_centralizados' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left-circle me-1"></i>Ver Centralizados
+        </a>
+        {% endif %}
+        <a href="{% url 'planfinanciero:gastos_movimiento_crear' %}?tipo_entidad={{ tipo_entidad }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Nuevo Movimiento
+        </a>
+    </div>
 </div>
 
 <!-- Totales Generales -->
@@ -92,10 +109,10 @@
                         <td class="text-end currency fw-bold">${{ item.saldo|floatformat:0|intcomma }}</td>
                         <td class="text-center">
                             <div class="btn-group btn-group-sm">
-                                <a href="{% url 'planfinanciero:gastos_rubro_kardex' item.rubro.codigo %}" class="btn btn-outline-secondary" title="Ver Kardex">
+                                <a href="{% url 'planfinanciero:gastos_rubro_kardex' item.rubro.tipo_entidad item.rubro.codigo %}" class="btn btn-outline-secondary" title="Ver Kardex">
                                     <i class="bi bi-journal-text"></i>
                                 </a>
-                                <a href="{% url 'planfinanciero:gastos_movimiento_crear' %}?rubro={{ item.rubro.codigo }}" class="btn btn-outline-success" title="Agregar movimiento">
+                                <a href="{% url 'planfinanciero:gastos_movimiento_crear' %}?rubro={{ item.rubro.pk }}" class="btn btn-outline-success" title="Agregar movimiento">
                                     <i class="bi bi-plus"></i>
                                 </a>
                             </div>

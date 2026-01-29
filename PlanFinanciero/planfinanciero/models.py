@@ -401,19 +401,30 @@ class FuenteFinanciacion(IngresoAgregado):
 class RubroGasto(models.Model):
     """
     Rubros del Plan Financiero de Gastos
-    Solo 3 rubros generales: Funcionamiento, Deuda, Inversión
+    Centralizados: Funcionamiento, Deuda, Inversión
+    Descentralizados: Funcionamiento, Deuda, Inversión, Gastos de Operación
     """
+    TIPO_ENTIDAD_CHOICES = [
+        ('CENTRALIZADO', 'Centralizado'),
+        ('DESCENTRALIZADO', 'Descentralizado'),
+    ]
+
     RUBRO_CHOICES = [
         ('FUNCIONAMIENTO', 'Funcionamiento'),
         ('DEUDA', 'Deuda'),
         ('INVERSION', 'Inversión'),
+        ('GASTOS_OPERACION', 'Gastos de Operación'),
     ]
 
-    codigo = models.CharField(
+    tipo_entidad = models.CharField(
         max_length=20,
-        unique=True,
-        choices=RUBRO_CHOICES,
-        verbose_name="Rubro"
+        choices=TIPO_ENTIDAD_CHOICES,
+        default='CENTRALIZADO',
+        verbose_name="Tipo de Entidad"
+    )
+    codigo = models.CharField(
+        max_length=30,
+        verbose_name="Código Rubro"
     )
     nombre = models.CharField(max_length=100, verbose_name="Nombre")
     descripcion = models.TextField(blank=True, verbose_name="Descripción")
@@ -423,10 +434,11 @@ class RubroGasto(models.Model):
     class Meta:
         verbose_name = "Rubro de Gasto"
         verbose_name_plural = "Rubros de Gastos"
-        ordering = ['codigo']
+        ordering = ['tipo_entidad', 'codigo']
+        unique_together = ['tipo_entidad', 'codigo']
 
     def __str__(self):
-        return self.nombre
+        return f"{self.get_tipo_entidad_display()} - {self.nombre}"
 
     @property
     def presupuesto_inicial(self):

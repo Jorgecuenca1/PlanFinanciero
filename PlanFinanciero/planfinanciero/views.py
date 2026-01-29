@@ -1056,9 +1056,13 @@ def api_buscar_rubros(request):
 # ==========================================
 
 @login_required
-def gastos_dashboard(request):
+def gastos_dashboard(request, tipo_entidad='CENTRALIZADO'):
     """Dashboard del Plan Financiero de Gastos"""
-    rubros = RubroGasto.objects.filter(activo=True)
+    # Validar tipo_entidad
+    if tipo_entidad not in ['CENTRALIZADO', 'DESCENTRALIZADO']:
+        tipo_entidad = 'CENTRALIZADO'
+
+    rubros = RubroGasto.objects.filter(activo=True, tipo_entidad=tipo_entidad)
 
     # Calcular totales para cada rubro
     datos_rubros = []
@@ -1086,9 +1090,10 @@ def gastos_dashboard(request):
         total_contracreditos += rubro.total_contracreditos
         total_saldo += rubro.saldo_actual
 
-    # Ultimos movimientos
+    # Ultimos movimientos de este tipo de entidad
     ultimos_movimientos = MovimientoGasto.objects.filter(
-        anulado=False
+        anulado=False,
+        rubro__tipo_entidad=tipo_entidad
     ).select_related('rubro', 'registrado_por').order_by('-fecha_registro')[:10]
 
     context = {
@@ -1100,7 +1105,9 @@ def gastos_dashboard(request):
         'total_contracreditos': total_contracreditos,
         'total_saldo': total_saldo,
         'ultimos_movimientos': ultimos_movimientos,
-        'total_movimientos': MovimientoGasto.objects.filter(anulado=False).count(),
+        'total_movimientos': MovimientoGasto.objects.filter(anulado=False, rubro__tipo_entidad=tipo_entidad).count(),
+        'tipo_entidad': tipo_entidad,
+        'tipo_entidad_display': 'Centralizados' if tipo_entidad == 'CENTRALIZADO' else 'Descentralizados',
     }
     return render(request, 'planfinanciero/gastos_dashboard.html', context)
 
@@ -1209,9 +1216,9 @@ def gastos_movimiento_anular(request, pk):
 
 
 @login_required
-def gastos_rubro_kardex(request, codigo):
+def gastos_rubro_kardex(request, tipo_entidad, codigo):
     """Ver kardex de un rubro de gasto"""
-    rubro = get_object_or_404(RubroGasto, codigo=codigo)
+    rubro = get_object_or_404(RubroGasto, tipo_entidad=tipo_entidad, codigo=codigo)
     movimientos = rubro.movimientos.all().order_by('fecha', 'fecha_registro')
 
     # Calcular saldo acumulado

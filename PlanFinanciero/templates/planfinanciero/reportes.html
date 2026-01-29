@@ -154,22 +154,17 @@
             </div>
         </div>
 
-        <!-- Kardex por Rubro de Gasto -->
-        <h6 class="mt-4 mb-3"><i class="bi bi-journal-text me-2"></i>Kardex por Rubro de Gasto</h6>
+        <!-- Links a Dashboards -->
+        <h6 class="mt-4 mb-3"><i class="bi bi-speedometer2 me-2"></i>Dashboards de Gastos</h6>
         <div class="row g-2">
-            <div class="col-4">
-                <a href="{% url 'planfinanciero:gastos_rubro_kardex' 'FUNCIONAMIENTO' %}" class="btn btn-outline-secondary w-100 btn-sm">
-                    <i class="bi bi-building me-1"></i><span class="d-none d-sm-inline">Funcionam.</span><span class="d-sm-none">Func.</span>
+            <div class="col-6">
+                <a href="{% url 'planfinanciero:gastos_centralizados' %}" class="btn btn-outline-primary w-100 btn-sm">
+                    <i class="bi bi-building me-1"></i>Centralizados
                 </a>
             </div>
-            <div class="col-4">
-                <a href="{% url 'planfinanciero:gastos_rubro_kardex' 'DEUDA' %}" class="btn btn-outline-danger w-100 btn-sm">
-                    <i class="bi bi-credit-card me-1"></i>Deuda
-                </a>
-            </div>
-            <div class="col-4">
-                <a href="{% url 'planfinanciero:gastos_rubro_kardex' 'INVERSION' %}" class="btn btn-outline-success w-100 btn-sm">
-                    <i class="bi bi-graph-up me-1"></i><span class="d-none d-sm-inline">Inversion</span><span class="d-sm-none">Inv.</span>
+            <div class="col-6">
+                <a href="{% url 'planfinanciero:gastos_descentralizados' %}" class="btn btn-outline-info w-100 btn-sm">
+                    <i class="bi bi-diagram-3 me-1"></i>Descentralizados
                 </a>
             </div>
         </div>
